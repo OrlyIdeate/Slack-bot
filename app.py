@@ -1,10 +1,12 @@
 import os
+from openai import OpenAI
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 # ボットトークンとソケットモードハンドラーを使ってアプリを初期化します
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
 
+####################################################################################################
 
 # 'hello' を含むメッセージをリッスンします
 # 指定可能なリスナーのメソッド引数の一覧は以下のモジュールドキュメントを参考にしてください：
@@ -26,6 +28,32 @@ def message_hello(message, say):
         ],
         text=f"Hello <@{message['user']}>!"
     )
+
+@app.message("@GPT")
+def ret_gpt(message, say):
+    client = OpenAI(
+        # defaults to os.environ.get("OPENAI_API_KEY")
+        api_key="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", 
+    )
+    message_text = message['text']
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": message_text,
+            }
+        ],
+        model="gpt-4",
+    )
+    message_content = chat_completion.choices[0].message.content
+    say(message_content)
+
+# 上までで処理できなかった場合の例外処理
+@app.event("message")
+def handle_unhandled_message_events(event, logger):
+    logger.info(f"未処理のメッセージイベント: {event}")
+
+###########################################################################################
 
 @app.action("button_click")
 def action_button_click(body, ack, say):
