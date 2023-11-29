@@ -33,7 +33,7 @@ def message_hello(message, say):
 def ret_gpt(message, say):
     client = OpenAI(
         # defaults to os.environ.get("OPENAI_API_KEY")
-        api_key="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", 
+        api_key=os.environ.get("OPENAI_API_KEY"),
     )
     message_text = message['text']
     chat_completion = client.chat.completions.create(
