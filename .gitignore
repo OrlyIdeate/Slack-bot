@@ -1,0 +1,3 @@
+#.venvもgit管理しないようにする
+.venv/
+.env
