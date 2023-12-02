@@ -1,10 +1,15 @@
 import os
+from dotenv import load_dotenv
 from openai import OpenAI
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
+
+# .envから環境変数を読み込む
+load_dotenv()
+
 # ボットトークンとソケットモードハンドラーを使ってアプリを初期化します
-app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
+app = App(token=os.getenv("SLACK_BOT_TOKEN"))
 
 ####################################################################################################
 
@@ -33,7 +38,7 @@ def message_hello(message, say):
 def ret_gpt(message, say):
     client = OpenAI(
         # defaults to os.environ.get("OPENAI_API_KEY")
-        api_key=os.environ.get("OPENAI_API_KEY"),
+        api_key=os.getenv("OPENAI_API_KEY"),
     )
     message_text = message['text']
     chat_completion = client.chat.completions.create(
@@ -64,4 +69,4 @@ def action_button_click(body, ack, say):
 
 # アプリを起動します
 if __name__ == "__main__":
-    SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"]).start()
+    SocketModeHandler(app, os.getenv("SLACK_APP_TOKEN")).start()
