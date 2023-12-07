@@ -1,10 +1,39 @@
 import os
+import pandas as pd
+import pickle
+import openai
+import mysql.connector
+import numpy as np
 from openai import OpenAI
 from slack_bolt import App
+from slack_sdk.web import WebClient 
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from datetime import datetime
 
 # ボットトークンとソケットモードハンドラーを使ってアプリを初期化します
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"))
+
+####################################################################################################
+
+client = openai.OpenAI(
+    # defaults to os.environ.get(“OPENAI_API_KEY”)
+    api_key="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",
+)
+
+def get_embedding(text):
+    response = client.embeddings.create(
+                  model="text-embedding-ada-002",
+                  input=text
+    )
+    # 応答から埋め込みデータを取得する正しい方法を使用
+    embedding = response.data[0].embedding
+    return embedding
+# コサイン類似度計算式
+def cosine_similarity(vec_a, vec_b):
+    dot_product = np.dot(vec_a, vec_b)
+    norm_a = np.linalg.norm(vec_a)
+    norm_b = np.linalg.norm(vec_b)
+    return dot_product / (norm_a * norm_b)
 
 ####################################################################################################
 
@@ -29,24 +58,54 @@ def message_hello(message, say):
         text=f"Hello <@{message['user']}>!"
     )
 
+
 @app.message("@GPT")
 def ret_gpt(message, say):
-    client = OpenAI(
-        # defaults to os.environ.get("OPENAI_API_KEY")
-        api_key="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", 
-    )
+    openai_client = OpenAI(api_key="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")
+    slack_client = WebClient(token="xoxb-6234162450775-6250589504278-ZVMcjSF6g6xubqAQRgSIg9yp")
     message_text = message['text']
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": message_text,
-            }
-        ],
-        model="gpt-4",
+    message_channel = message['channel']
+    message_thread_ts = message['ts']
+
+    # ChatGPTへの問い合わせ
+    chat_completion = openai_client.chat.completions.create(
+        messages=[{"role": "user", "content": message_text}],
+        model="gpt-4"
     )
-    message_content = chat_completion.choices[0].message.content
-    say(message_content)
+    response_text = chat_completion.choices[0].message.content
+
+    config = {
+        'user': 'root',
+        'password': 'hIxhon-9xinto-wernuf',
+        'host': '34.135.69.97',
+        'database': 'test1',
+    }
+    db_connection = mysql.connector.connect(**config)
+    cursor = db_connection.cursor()
+    text1 = message_text # 取得してきた質問
+    vector1 = get_embedding(text1)
+    # データベースから全てのベクトルを取得
+    query = "SELECT content, vector, url, date FROM phese4;"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    similarity_list = []
+    for content, vector_bytes, url, date in rows:
+        vector2 = pickle.loads(vector_bytes)
+        similarity = cosine_similarity(vector1, vector2)
+        similarity_list.append((similarity, content, url, date))
+    # 類似度スコアでソートし、上位5つを取得
+    similarity_list.sort(reverse=True)
+    top_5_similar_texts = similarity_list[:5]
+    # 結果を表示 
+    response_text+= "\n類似度が高い順:\n\n"   
+    for similarity, content, url, date in top_5_similar_texts:
+        response_text+=f"Content: {content}, URL: {url}, Date: {date}\n"
+    # スレッド内に返信を送信
+    response = slack_client.chat_postMessage(
+        channel=message_channel,
+        text=response_text,
+        thread_ts=message_thread_ts
+    )
 
 # 上までで処理できなかった場合の例外処理
 @app.event("message")
@@ -54,13 +113,6 @@ def handle_unhandled_message_events(event, logger):
     logger.info(f"未処理のメッセージイベント: {event}")
 
 ###########################################################################################
-
-@app.action("button_click")
-def action_button_click(body, ack, say):
-    # アクションを確認したことを即時で応答します
-    ack()
-    # チャンネルにメッセージを投稿します
-    say(f"<@{body['user']['id']}>さんがボタンをクリックしましたね？")
 
 # アプリを起動します
 if __name__ == "__main__":
