@@ -1,3 +1,5 @@
-#.venvもgit管理しないようにする
+# GitHubで管理しないようにする
 .venv/
 .env
+.vscode/
+modules/__pycache__/
