@@ -1,3 +1,4 @@
 #.venvもgit管理しないようにする
 .venv/
 .env
+.vscode/settings.json
