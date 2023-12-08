@@ -41,3 +41,21 @@ def generator_answer_gpt(app: App):
     @app.event("message")
     def handle_unhandled_message_events(event, logger):
         logger.info(f"未処理のメッセージイベント: {event}")
+
+
+def chatgpt(message):
+        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        message_text = message
+
+        chat_completion = openai_client.chat.completions.create(
+            messages=[{"role": "user", "content": message_text}],
+            model="gpt-4"
+        )
+        response_text = chat_completion.choices[0].message.content
+
+        top_5_similar_texts = get_top_5_similar_texts(message_text)
+        response_text+= "\n類似度が高い順:\n\n"
+        for similarity, content, url, date in top_5_similar_texts:
+            response_text+=f"Content: {content}, URL: {url}, Date: {date}\n"
+
+        return response_text
