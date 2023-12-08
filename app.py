@@ -1,31 +1,32 @@
 import os
-import pandas as pd
-import pickle
-import openai
-import mysql.connector
 import numpy as np
-from dotenv import load_dotenv
-from openai import OpenAI
-from slack_bolt import App
-from slack_sdk.web import WebClient 
-from slack_bolt.adapter.socket_mode import SocketModeHandler
+import pandas as pd
 from datetime import datetime
-from modules.modal import register_modal_handlers # Slackのフォームの処理
+import pickle
+import mysql.connector
+import openai
 
-# .envから環境変数を読み込む
+# Slackライブラリ
+from slack_bolt import App
+from slack_sdk.web import WebClient
+from slack_bolt.adapter.socket_mode import SocketModeHandler
+
+# .env読み込み
+from dotenv import load_dotenv
 load_dotenv()
 
-# ボットトークンとソケットモードハンドラーを使ってアプリを初期化します
-app = App(token=os.getenv("SLACK_BOT_TOKEN"))
+from modules.modal import register_modal_handlers # Slackのフォームの処理
 
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
+
+app = App(token=SLACK_BOT_TOKEN)
 register_modal_handlers(app) # Slackのフォームの処理
 
 ####################################################################################################
 
-client = openai.OpenAI(
-    # defaults to os.environ.get(“OPENAI_API_KEY”)
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def get_embedding(text):
     response = client.embeddings.create(
@@ -42,12 +43,33 @@ def cosine_similarity(vec_a, vec_b):
     norm_b = np.linalg.norm(vec_b)
     return dot_product / (norm_a * norm_b)
 
+def get_top_5_similar_texts(message_text):
+    vector1 = get_embedding(message_text)
+    config = {
+        'user': 'root',
+        'password': 'hIxhon-9xinto-wernuf',
+        'host': '34.135.69.97',
+        'database': 'test1',
+    }
+    db_connection = mysql.connector.connect(**config)
+    cursor = db_connection.cursor()
+    query = "SELECT content, vector, url, date FROM phase4;"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    similarity_list = []
+    for content, vector_bytes, url, date in rows:
+        vector2 = pickle.loads(vector_bytes)
+        similarity = cosine_similarity(vector1, vector2)
+        similarity_list.append((similarity, content, url, date))
+    similarity_list.sort(reverse=True)
+    return similarity_list[:5]
+
 ####################################################################################################
 
 @app.message("@GPT")
 def ret_gpt(message, say):
-    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    slack_client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
+    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+    slack_client = WebClient(token=SLACK_BOT_TOKEN)
     message_text = message['text']
     message_channel = message['channel']
     message_thread_ts = message['ts']
@@ -59,29 +81,7 @@ def ret_gpt(message, say):
     )
     response_text = chat_completion.choices[0].message.content
 
-    config = {
-        'user': 'root',
-        'password': 'hIxhon-9xinto-wernuf',
-        'host': '34.135.69.97',
-        'database': 'test1',
-    }
-    db_connection = mysql.connector.connect(**config)
-    cursor = db_connection.cursor()
-    text1 = message_text # 取得してきた質問
-    vector1 = get_embedding(text1)
-    # データベースから全てのベクトルを取得
-    query = "SELECT content, vector, url, date FROM phese4;"
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    similarity_list = []
-    for content, vector_bytes, url, date in rows:
-        vector2 = pickle.loads(vector_bytes)
-        similarity = cosine_similarity(vector1, vector2)
-        similarity_list.append((similarity, content, url, date))
-    # 類似度スコアでソートし、上位5つを取得
-    similarity_list.sort(reverse=True)
-    top_5_similar_texts = similarity_list[:5]
-    # 結果を表示
+    top_5_similar_texts = get_top_5_similar_texts(message_text)
     response_text+= "\n類似度が高い順:\n\n"
     for similarity, content, url, date in top_5_similar_texts:
         response_text+=f"Content: {content}, URL: {url}, Date: {date}\n"
@@ -101,4 +101,4 @@ def handle_unhandled_message_events(event, logger):
 
 # アプリを起動します
 if __name__ == "__main__":
-    SocketModeHandler(app, os.getenv("SLACK_APP_TOKEN")).start()
+    SocketModeHandler(app, SLACK_APP_TOKEN).start()
