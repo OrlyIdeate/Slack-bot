@@ -1,9 +1,4 @@
 import os
-import numpy as np
-import pandas as pd
-from datetime import datetime
-import pickle
-import mysql.connector
 import openai
 
 # Slackライブラリ
@@ -15,54 +10,16 @@ from slack_bolt.adapter.socket_mode import SocketModeHandler
 from dotenv import load_dotenv
 load_dotenv()
 
-from modules.modal import register_modal_handlers # Slackのフォームの処理
+# modulesフォルダのユーザー定義関数をインポート
+from modules.modal import register_modal_handlers # Slackのフォーム
+from modules.similarity import get_top_5_similar_texts # 上位5つの類似データ取得
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = App(token=SLACK_BOT_TOKEN)
-register_modal_handlers(app) # Slackのフォームの処理
-
-####################################################################################################
-
-client = openai.OpenAI(api_key=OPENAI_API_KEY)
-
-def get_embedding(text):
-    response = client.embeddings.create(
-                model="text-embedding-ada-002",
-                input=text
-    )
-    # 応答から埋め込みデータを取得する正しい方法を使用
-    embedding = response.data[0].embedding
-    return embedding
-# コサイン類似度計算式
-def cosine_similarity(vec_a, vec_b):
-    dot_product = np.dot(vec_a, vec_b)
-    norm_a = np.linalg.norm(vec_a)
-    norm_b = np.linalg.norm(vec_b)
-    return dot_product / (norm_a * norm_b)
-
-def get_top_5_similar_texts(message_text):
-    vector1 = get_embedding(message_text)
-    config = {
-        'user': 'root',
-        'password': 'hIxhon-9xinto-wernuf',
-        'host': '34.135.69.97',
-        'database': 'test1',
-    }
-    db_connection = mysql.connector.connect(**config)
-    cursor = db_connection.cursor()
-    query = "SELECT content, vector, url, date FROM phase4;"
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    similarity_list = []
-    for content, vector_bytes, url, date in rows:
-        vector2 = pickle.loads(vector_bytes)
-        similarity = cosine_similarity(vector1, vector2)
-        similarity_list.append((similarity, content, url, date))
-    similarity_list.sort(reverse=True)
-    return similarity_list[:5]
+register_modal_handlers(app) # Slackのフォーム
 
 ####################################################################################################
 
@@ -81,7 +38,7 @@ def ret_gpt(message, say):
     )
     response_text = chat_completion.choices[0].message.content
 
-    top_5_similar_texts = get_top_5_similar_texts(message_text)
+    top_5_similar_texts = get_top_5_similar_texts(message_text) # 上位5件の類似データを取得
     response_text+= "\n類似度が高い順:\n\n"
     for similarity, content, url, date in top_5_similar_texts:
         response_text+=f"Content: {content}, URL: {url}, Date: {date}\n"
