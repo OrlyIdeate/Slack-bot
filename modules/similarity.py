@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import openai
 import mysql.connector
-from datetime import datetime
 import pickle
 
 # .env読み込み
