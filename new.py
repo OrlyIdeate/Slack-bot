@@ -99,49 +99,6 @@ def ret_gpt(message, say):
     )
 
 
-@app.message("@search")
-def ret_gpt(message, say):
-    openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    slack_client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
-    message_text = message['text']
-    message_channel = message['channel']
-    message_thread_ts = message['ts']
-
-    config = {
-        'user': 'root',
-        'password': 'hIxhon-9xinto-wernuf',
-        'host': '34.135.69.97',
-        'database': 'test1',
-    }
-    db_connection = mysql.connector.connect(**config)
-    cursor = db_connection.cursor()
-    text1 = message_text # 取得してきた質問
-    vector1 = get_embedding(text1)
-    # データベースから全てのベクトルを取得
-    query = "SELECT content, vector, url, date FROM phese4;"
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    similarity_list = []
-    for content, vector_bytes, url, date in rows:
-        vector2 = pickle.loads(vector_bytes)
-        similarity = cosine_similarity(vector1, vector2)
-        similarity_list.append((similarity, content, url, date))
-    # 類似度スコアでソートし、上位5つを取得
-    similarity_list.sort(reverse=True)
-    top_5_similar_texts = similarity_list[:5]
-    # 結果を表示
-    response_text = "*検索結果*:\n\n"
-
-    for similarity, content, url, date in top_5_similar_texts:
-        response_text += f"*Content:* {content}\n"
-        response_text += f"*URL:* <{url}|Link>\n"
-        response_text += f"*Date:* {date}\n\n"
-    # スレッド内に返信を送信
-    response = slack_client.chat_postMessage(
-        channel=message_channel,
-        text=response_text,
-        thread_ts=message_thread_ts
-    )
 
 
 @app.message("@show")
