@@ -1,6 +1,13 @@
 from slack_bolt import App
 from slack_sdk import WebClient
 
+# .env読み込み
+from dotenv import load_dotenv
+load_dotenv()
+
+
+from .chatgpt import chatgpt
+
 def register_modal_handlers(app: App):
     @app.shortcut("modal-shortcut")
     def open_modal(ack, body, client):
@@ -34,14 +41,22 @@ def register_modal_handlers(app: App):
         )
 
     @app.view("modal-submit")
-    def modal_submit(ack, body, client, respond):
+    def modal_submit(ack, body, client):
         ack()
         # フォーム（モーダル）で受け取った質問が入ってる変数
         question = body["view"]["state"]["values"]["question-block"]["input_field"]["value"]
         # 入力されたデータをチャンネルに送信する
         channel_id = "C067ALJLXRQ"  # メッセージを送信するチャンネルのIDに置き換えてください
 
-        client.chat_postMessage(
+        response_text = chatgpt(question)
+
+        thread = client.chat_postMessage(
             channel=channel_id,
             text=f"受け取った質問: {question}"
+        )
+
+        client.chat_postMessage(
+            channel=channel_id,
+            thread_ts=thread['ts'],
+            text=response_text
         )
