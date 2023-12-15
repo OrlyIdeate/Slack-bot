@@ -16,6 +16,7 @@ from modules.chatgpt import generator_answer_gpt # @GPTでChatGPTを起動させ
 from modules.search import search
 from modules.show import show
 from modules.save import save
+from modules.message import message
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
@@ -27,7 +28,7 @@ generator_answer_gpt(app) # @GPTでChatGPTを起動
 search(app)
 show(app)
 save(app)
-
+message(app)
 
 # アプリを起動します
 if __name__ == "__main__":
