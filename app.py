@@ -222,8 +222,6 @@ def handle_message(event, say):
 
 
 
-# メッセージを受け取ったときに起こる基本処理
-# 話がそれていないかチェックする
 @app.event("message")
 def distraction_checker(message, say):
     openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -233,21 +231,29 @@ def distraction_checker(message, say):
 
     message_thread_ts = message.get('thread_ts')
     if message_thread_ts is None:
-        quit
+        return
+    thread_ts = message_thread_ts
     #スレッドでのチャットが何個目かを取得してthread_countにいれる
-
-    thread_count = 10
-
-    if thread_count == 10:
-        #thread_countを0にする(テーブルの値を0にする)
-
-
-
+    config = {
+        'user': 'root',
+        'password': 'hIxhon-9xinto-wernuf',
+        'host': '34.135.69.97',
+        'database': 'test1',
+    }
+    db_connection = mysql.connector.connect(**config)
+    cursor = db_connection.cursor()
+    thread_id = message['thread_id']
+    query = f"UPDATE thread_monitoring SET message_count = message_count + 1 WHERE thread_id = '{thread_id}'"
+    cursor.execute(query)
+    thread_count = f"SELECT message_count FROM thread_monitoring WHERE thread_id = '{thread_id}'"
+    cursor.execute(thread_count_query)
+    thread_count = cursor.fetchone()[0]
+    cursor.close()
+    db_connection.close()
+    if thread_count % 10 == 0:
         #これまでの会話ログとスレッドの最初の質問を取得
-
         prev_message = slack_client.conversations_replies(channel=message_channel, ts=message_thread_ts)
         ques = prev_message[messages][0]
-        # ChatGPTへの問い合わせ
         message_text_with_instruction = prev_message + "\nここまでの文言は以下の質問に対する直近の会議内容です。\n" + ques + "\n質問から会議がそれてきていると考えるならば「それています」とのみ出力し、それていない場合は「それていません」とのみ出力してください。"
         chat_completion = openai_client.chat.completions.create(
             messages=[{"role": "user", "content": message_text_with_instruction}],
@@ -265,7 +271,7 @@ def distraction_checker(message, say):
         else:
             response = slack_client.chat_postMessage(
                 channel=message_channel,
-                text="てすと",
+                text=thread_count,
                 thread_ts=message_thread_ts
             )
 
