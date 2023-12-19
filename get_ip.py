@@ -13,8 +13,8 @@ def get_local_ip():
 print("Local IP Address:", get_local_ip())
 config = {
     'user': 'root',
-    'password': 'hIxhon-9xinto-wernuf',
-    'host': '34.135.69.97',
+    'password': 'citson-buzrit-4cyxZu',
+    'host': '35.223.243.48',
     'database': 'test1',
 }
 db_connection = mysql.connector.connect(**config)
