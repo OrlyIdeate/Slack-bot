@@ -20,7 +20,6 @@ def generator_answer_gpt(app: App):
         message_text = message['text']
         message_channel = message['channel']
         message_thread_ts = message['ts']
-
         message_text += " これは質問として十分ですか？不十分ですか？十分のときは十分の確認は必要なく、質問の回答だけを表示してください。不十分であれば回答はせずに何が不十分なのかを教えてください。"
 
         chat_completion = openai_client.chat.completions.create(
@@ -43,10 +42,6 @@ def generator_answer_gpt(app: App):
             text=response_text,
             thread_ts=message_thread_ts
         )
-
-    @app.event("message")
-    def handle_unhandled_message_events(event, logger):
-        logger.info(f"未処理のメッセージイベント: {event}")
 
 
 def chatgpt(message):
