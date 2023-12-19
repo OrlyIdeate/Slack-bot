@@ -14,7 +14,7 @@ load_dotenv()
 from modules.modal import register_modal_handlers # Slackのフォームの関数
 from modules.chatgpt import generator_answer_gpt # @GPTでChatGPTを起動させる関数
 from modules.search import search
-from modules.show import show
+from modules.show import select_all_db
 from modules.save import save
 from modules.message import message
 
@@ -23,10 +23,11 @@ SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = App(token=SLACK_BOT_TOKEN)
+select_all_db(app)
 register_modal_handlers(app) # Slackのフォーム
 generator_answer_gpt(app) # @GPTでChatGPTを起動
 search(app)
-show(app)
+
 save(app)
 message(app)
 

@@ -1,5 +1,9 @@
+import logging
+logging.basicConfig(level=logging.ERROR)
+
 from slack_bolt import App
 from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 import os
 
 from dotenv import load_dotenv
@@ -23,9 +27,13 @@ def search(app: App):
             response_text += f"*Content:* {content}\n"
             response_text += f"*URL:* <{url}|Link>\n"
             response_text += f"*Date:* {date}\n\n"
-        # スレッド内に返信を送信
-        response = slack_client.chat_postMessage(
-            channel=message_channel,
-            text=response_text,
-            thread_ts=message_thread_ts
-        )
+
+        try:
+            # スレッド内に返信を送信
+            response = slack_client.chat_postMessage(
+                channel=message_channel,
+                text=response_text,
+                thread_ts=message_thread_ts
+            )
+        except SlackApiError as e:
+            assert e.response["error"]

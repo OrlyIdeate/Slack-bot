@@ -1,15 +1,21 @@
+import logging
+logging.basicConfig(level=logging.ERROR)
+
 import os
 from slack_bolt import App
 from slack_sdk import WebClient
-import mysql
+from slack_sdk.errors import SlackApiError
+import mysql.connector
 
 from dotenv import load_dotenv
 load_dotenv()
 
-def show(app: App):
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+
+def select_all_db(app: App):
     @app.message("@show")
-    def ret_gpt(message, say):
-        slack_client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
+    def get_db_data(message, say):
+        slack_client = WebClient(token=SLACK_BOT_TOKEN)
         message_channel = message['channel']
         message_thread_ts = message['ts']
         config = {
@@ -25,6 +31,7 @@ def show(app: App):
         rows = cursor.fetchall()
 
         similarity_list = []
+        print(similarity_list)
         for content, url, date in rows:
             # 以前はここでvectorを処理していましたが、今は不要なので削除
             similarity_list.append((content, url, date))
@@ -34,9 +41,15 @@ def show(app: App):
             response_text += f"*Content:* {content}\n"
             response_text += f"*URL:* <{url}|Link>\n"
             response_text += f"*Date:* {date}\n\n"
+
+        print(response_text)
+
+        try:
         # スレッド内に返信を送信
-        slack_client.chat_postMessage(
-            channel=message_channel,
-            text=response_text,
-            thread_ts=message_thread_ts
-        )
+            response = slack_client.chat_postMessage(
+                channel=message_channel,
+                text=response_text,
+                thread_ts=message_thread_ts
+            )
+        except SlackApiError as e:
+            print(f"Error sending message: {e.response['error']}")
