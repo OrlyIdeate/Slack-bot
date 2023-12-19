@@ -26,10 +26,10 @@ def message(app: App):
         thread_ts = message_thread_ts
         #スレッドでのチャットが何個目かを取得してthread_countにいれる
         config = {
-            'user': 'root',
-            'password': 'hIxhon-9xinto-wernuf',
-            'host': '34.135.69.97',
-            'database': 'test1',
+        'user': 'root',
+        'password': 'citson-buzrit-4cyxZu',
+        'host': '35.223.243.48',
+        'database': 'test1',
         }
         db_connection = mysql.connector.connect(**config)
         cursor = db_connection.cursor()

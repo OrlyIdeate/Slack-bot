@@ -21,10 +21,10 @@ def save(app: App):
         thread_url = f"https://dec-ph4-hq.slack.com/archives/{channel_id}/p{message_ts.replace('.', '')}?thread_ts={thread_ts.replace('.', '')}&cid={channel_id}"
 
         config = {
-            'user': 'root',
-            'password': 'hIxhon-9xinto-wernuf',
-            'host': '34.135.69.97',
-            'database': 'test1',
+        'user': 'root',
+        'password': 'citson-buzrit-4cyxZu',
+        'host': '35.223.243.48',
+        'database': 'test1',
         }
         db_connection = mysql.connector.connect(**config)
         cursor = db_connection.cursor()
