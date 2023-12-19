@@ -9,17 +9,17 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from modules.similarity import get_embedding, get_top_5_similar_texts
+from modules.similarity import get_top_5_similar_texts
 
-def search(app: App):
+def look_for(app: App):
     @app.message("@search")
-    def ret_gpt(message, say):
+    def investigate(message, say):
         slack_client = WebClient(token=os.getenv("SLACK_BOT_TOKEN"))
         message_text = message['text']
         message_channel = message['channel']
         message_thread_ts = message['ts']
 
-        top_5_similar_texts = get_top_5_similar_texts(get_embedding(message_text))
+        top_5_similar_texts = get_top_5_similar_texts(message_text)
         # 結果を表示
         response_text = "*検索結果*:\n\n"
 
