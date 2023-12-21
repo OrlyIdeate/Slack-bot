@@ -1,15 +1,17 @@
 from slack_bolt import App
-from slack_sdk import WebClient
 
 # .env読み込み
 from dotenv import load_dotenv
 load_dotenv()
 
 
-from .chatgpt import chatgpt
+from modules.chatgpt import chatgpt
+from modules.similarity import get_top_5_similar_texts
+from modules.show import db_list
 
 def register_modal_handlers(app: App):
     @app.shortcut("modal-shortcut")
+    # Chat-GPTに質問するモーダル
     def open_modal(ack, body, client):
         ack()
         # モーダルを送信する
@@ -59,4 +61,61 @@ def register_modal_handlers(app: App):
             channel=channel_id,
             thread_ts=thread['ts'],
             text=response_text
+        )
+
+
+
+    @app.shortcut("open_search_modal")
+    def open_search_modal(ack, body, client):
+        ack()
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view={
+                "type": "modal",
+                "callback_id": "search_modal",
+                "title": {"type": "plain_text", "text": "検索"},
+                "blocks": [
+                    {
+                        "type": "input",
+                        "block_id": "search_query",
+                        "label": {"type": "plain_text", "text": "検索クエリ"},
+                        "element": {"type": "plain_text_input", "action_id": "input"}
+                    }
+                ],
+                "submit": {"type": "plain_text", "text": "検索"}
+            }
+        )
+
+    @app.view("search_modal")
+    def handle_search_submission(ack, body, client, view):
+        ack()
+        search_query = view["state"]["values"]["search_query"]["input"]["value"]
+        top_5_similar_texts = get_top_5_similar_texts(search_query)
+        # 結果を表示
+        response_text = "*検索結果*:\n\n"
+        for _, content, url, date in top_5_similar_texts:
+            response_text += f"*Content:* {content}\n"
+            response_text += f"*URL:* <{url}|Link>\n"
+            response_text += f"*Date:* {date}\n\n"
+        client.chat_postMessage(
+            channel=body["user"]["id"],
+            text=response_text
+        )
+
+
+    @app.shortcut("db_list")
+    def open_modal(ack, body, client):
+        ack()
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view={
+                "type": "modal",
+                "title": {"type": "plain_text", "text": "全ナレッジ"},
+                "blocks": [
+                    {
+                        "type": "section",
+                        "text": {"type": "mrkdwn", "text": db_list()[:4000]},
+                    }
+                ],
+            },
         )
