@@ -10,7 +10,7 @@ from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
 
 def register_modal_handlers(app: App):
-    @app.shortcut("modal-shortcut")
+    @app.action("modal-shortcut")
     # Chat-GPTに質問するモーダル
     def open_modal(ack, body, client):
         ack()
@@ -65,7 +65,7 @@ def register_modal_handlers(app: App):
 
 
 
-    @app.shortcut("open_search_modal")
+    @app.action("open_search_modal")
     def open_search_modal(ack, body, client):
         ack()
         client.views_open(
@@ -103,7 +103,7 @@ def register_modal_handlers(app: App):
         )
 
 
-    @app.shortcut("db_list")
+    @app.action("db_list")
     def open_modal(ack, body, client):
         ack()
         client.views_open(
@@ -114,7 +114,7 @@ def register_modal_handlers(app: App):
                 "blocks": [
                     {
                         "type": "section",
-                        "text": {"type": "mrkdwn", "text": db_list()[:4000]},
+                        "text": {"type": "mrkdwn", "text": db_list()[:400]},
                     }
                 ],
             },
