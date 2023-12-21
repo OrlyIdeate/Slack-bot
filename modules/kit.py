@@ -1,12 +1,3 @@
-import os
-from slack_bolt import App
-from slack_sdk.web import WebClient
-import openai
-
-# .env読み込み
-from dotenv import load_dotenv
-load_dotenv()
-
 def generate_slack_message():
     return {
 	    "blocks": [
