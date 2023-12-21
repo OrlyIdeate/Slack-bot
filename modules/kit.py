@@ -1,7 +1,7 @@
 def generate_slack_message():
     return {
-	    "blocks": [
-		    {
+        "blocks": [
+            {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
@@ -36,37 +36,37 @@ def generate_slack_message():
                     }
                 ]
             },
-		    {
-			    "type": "actions",
-			    "elements": [
-			    	{
-			    		"type": "button",
-			    		"text": {
-			    			"type": "plain_text",
-			    			"text": "Button 1"
-			    		},
-			    		"value": "button_1",
-			    		"action_id": "actionId-1"
-			    	},
-			    	{
-			    		"type": "button",
-			    		"text": {
-			    			"type": "plain_text",
-			       			"text": "Button 2"
-			    		},
-			    		"value": "button_2",
-		    			"action_id": "actionId-2"
-		    		},
-		    		{
-		    			"type": "button",
-		    			"text": {
-		    				"type": "plain_text",
-					        "text": "Button 3"
-				        },
-				        "value": "button_3",
-				        "action_id": "actionId-3"
-			        }
-			    ]
-		    }
-	    ]
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "質問"
+                        },
+                        "value": "question",
+                        "action_id": "modal-shortcut"
+                    },
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "検索"
+                        },
+                        "value": "search",
+                        "action_id": "open_search_modal"
+                    },
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "一覧表示"
+                        },
+                        "value": "list",
+                        "action_id": "db_list"
+                    }
+                ]
+            }
+        ]
     }
