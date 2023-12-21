@@ -7,7 +7,7 @@ import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
 from slack_bolt import App
-from slack_sdk.web import WebClient 
+from slack_sdk.web import WebClient
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from datetime import datetime
 from modules.modal import register_modal_handlers # Slackのフォームの処理
@@ -113,7 +113,7 @@ def ret_gpt(message, say):
         'password': 'citson-buzrit-4cyxZu',
         'host': '35.223.243.48',
         'database': 'test1',
-    }
+        }
     db_connection = mysql.connector.connect(**config)
     cursor = db_connection.cursor()
     query = "SELECT content, url, date FROM phese4;"

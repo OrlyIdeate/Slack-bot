@@ -7,7 +7,7 @@ import openai
 from dotenv import load_dotenv
 load_dotenv()
 
-from .similarity import get_top_5_similar_texts
+from modules.similarity import get_top_5_similar_texts
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
