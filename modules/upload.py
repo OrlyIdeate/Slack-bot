@@ -58,3 +58,57 @@ def source(app: App):
 
         # 生成したURLをSlackチャンネルに返信
         say("保存しました。")
+
+def upload(content, url, category):
+    config = {
+        'user': 'root',
+        'password': 'citson-buzrit-4cyxZu',
+        'host': '35.223.243.48',
+        'database': 'test1',
+    }
+
+    try:
+        db_connection = mysql.connector.connect(**config)
+        cursor = db_connection.cursor()
+
+        # ベクトル化
+        vector = get_embedding(content)
+        vector_bytes = pickle.dumps(vector)
+
+        # 現在の日付
+        today = datetime.now()
+
+        # データベースにデータを挿入
+        insert_query = "INSERT INTO phese4 (content, vector, url, category, date) VALUES (%s, %s, %s, %s, %s);"
+        cursor.execute(insert_query, (content, vector_bytes, url, category, today))
+        db_connection.commit()
+
+    except mysql.connector.Error as err:
+        print("Database error: ", err)
+    finally:
+        if db_connection.is_connected():
+            cursor.close()
+            db_connection.close()
+
+def get_unique_categories():
+    config = {
+        'user': 'root',
+        'password': 'citson-buzrit-4cyxZu',
+        'host': '35.223.243.48',
+        'database': 'test1',
+    }
+    db_connection = mysql.connector.connect(**config)
+    cursor = db_connection.cursor()
+    cursor.execute("SELECT DISTINCT category FROM phese4")
+    categories = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
+
+    # ここで None と "null" を除外
+    filtered_categories = [category[0] for category in categories if category[0] is not None and category[0] != "null" and category[0] != "none"]
+
+    if not filtered_categories:
+        return ["カテゴリーがありません"]
+    else:
+        return filtered_categories
+

@@ -40,12 +40,13 @@ def store_thread(app: App):
         vector_bytes = pickle.dumps(vector1)
 
         url = thread_url
+        category = "スレッド"
 
         today = datetime.now()
 
         # データベースにデータを挿入
-        insert_query = "INSERT INTO phese4 (content, vector, url, date) VALUES (%s, %s, %s, %s);"
-        cursor.execute(insert_query, (text1, vector_bytes, url ,today))
+        insert_query = "INSERT INTO phese4 (content, vector, url, date, category) VALUES (%s, %s, %s, %s, %s);"
+        cursor.execute(insert_query, (text1, vector_bytes, url ,today, category))
         db_connection.commit()
 
         # 生成したURLをSlackチャンネルに返信
