@@ -70,7 +70,7 @@ def workflow_step(app):
 
     # WorkflowStep の新しいインスタンスを作成する
     ws = WorkflowStep(
-        callback_id="chatgpt",
+        callback_id="workflow-step",
         edit=edit,
         save=save,
         execute=execute,
