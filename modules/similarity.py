@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import openai
 import mysql.connector
-from datetime import datetime
 import pickle
 
 # .env読み込み
@@ -37,10 +36,10 @@ def get_top_5_similar_texts(message_text):
     vector1 = get_embedding(message_text)
     config = {
         'user': 'root',
-        'password': 'hIxhon-9xinto-wernuf',
-        'host': '34.135.69.97',
+        'password': 'citson-buzrit-4cyxZu',
+        'host': '35.223.243.48',
         'database': 'test1',
-    }
+        }
     db_connection = mysql.connector.connect(**config)
     cursor = db_connection.cursor()
     query = "SELECT content, vector, url, date FROM phese4;"
