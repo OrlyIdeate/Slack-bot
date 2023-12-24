@@ -9,16 +9,17 @@ from modules.chatgpt import chatgpt
 from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
+from modules.delete import del_message
 
 def register_modal_handlers(app: App):
-    @app.action("modal-shortcut")
+    @app.action("question")
     # Chat-GPTに質問するモーダル
     def open_modal(ack, body, client):
         ack()
         # モーダルを送信する
         modal_view = {
             "type": "modal",
-            "callback_id": "modal-submit",
+            "callback_id": "send_question",
             "title": {"type": "plain_text", "text": "Chat-GPTに質問"},
             "submit": {"type": "plain_text", "text": "送信"},
             # 見た目の調整は https://app.slack.com/block-kit-builder を使うと便利です
@@ -43,7 +44,9 @@ def register_modal_handlers(app: App):
             view=modal_view
         )
 
-    @app.view("modal-submit")
+        del_message(client, body)
+
+    @app.view("send_question")
     def modal_submit(ack, body, client):
         ack()
         # フォーム（モーダル）で受け取った質問が入ってる変数
@@ -66,14 +69,14 @@ def register_modal_handlers(app: App):
 
 
 
-    @app.action("open_search_modal")
+    @app.action("search")
     def open_search_modal(ack, body, client):
         ack()
         client.views_open(
             trigger_id=body["trigger_id"],
             view={
                 "type": "modal",
-                "callback_id": "search_modal",
+                "callback_id": "searching",
                 "title": {"type": "plain_text", "text": "検索"},
                 "blocks": [
                     {
@@ -87,7 +90,9 @@ def register_modal_handlers(app: App):
             }
         )
 
-    @app.view("search_modal")
+        del_message(client, body)
+
+    @app.view("searching")
     def handle_search_submission(ack, body, client, view):
         ack()
         search_query = view["state"]["values"]["search_query"]["input"]["value"]
@@ -120,11 +125,13 @@ def register_modal_handlers(app: App):
                 ],
             },
         )
+        del_message(client, body)
 
 
     @app.action("upload")
     def open_modal(ack, body, client):
         ack()
+        del_message(client, body)
         categories = get_unique_categories()  # データベースからカテゴリーを取得
 
         if categories == ["カテゴリーがありません"]:
@@ -232,7 +239,7 @@ def register_modal_handlers(app: App):
             trigger_id=body["trigger_id"],
             view=modal_view_up
         )
-    
+
     @app.view("modal-submit_up")  # モーダルのcallback_idに合わせて設定
     def handle_modal_submission(ack, body, client, view, logger):
         ack()
