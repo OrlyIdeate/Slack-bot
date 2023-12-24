@@ -21,9 +21,9 @@ from modules.upload import source
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 
-app = App(token=SLACK_BOT_TOKEN)
+app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
 source(app)
 look_for(app)
 store_thread(app)
