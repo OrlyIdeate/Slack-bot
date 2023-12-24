@@ -1,7 +1,4 @@
-import os
-from slack_bolt import App
 from slack_bolt.workflows.step import WorkflowStep
-from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 # .env読み込み
 from dotenv import load_dotenv
@@ -13,7 +10,7 @@ from modules.kit import generate_slack_message
 def workflow_step(app):
     # WorkflowStep 定義
 
-    def edit(ack, step, configure, logger):
+    def edit(ack, configure):
         ack()
 
         blocks = [
@@ -39,7 +36,7 @@ def workflow_step(app):
 
 
 
-    def save(ack, body, view, update, logger):
+    def save(ack, view, update):
         ack()
 
         values = view["state"]["values"]
