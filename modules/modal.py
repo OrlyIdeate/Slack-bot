@@ -120,7 +120,7 @@ def register_modal_handlers(app: App):
                 "blocks": [
                     {
                         "type": "section",
-                        "text": {"type": "mrkdwn", "text": db_list()[:400]},
+                        "text": {"type": "mrkdwn", "text": db_list()[:300]},
                     }
                 ],
             },
