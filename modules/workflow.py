@@ -58,7 +58,6 @@ def workflow_step(app):
         ack()
         ch_id = step["inputs"]["channel"]["value"]
 
-        print(f"channel_id: {ch_id}")
         messages = generate_slack_message()["blocks"]
 
         response = client.chat_postMessage(
