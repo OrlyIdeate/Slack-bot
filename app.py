@@ -1,9 +1,7 @@
 import os
-import openai
 
 # Slackライブラリ
 from slack_bolt import App
-from slack_sdk.web import WebClient
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 # .env読み込み
@@ -17,10 +15,8 @@ from modules.search import look_for
 from modules.show import select_all_db
 from modules.save import store_thread
 from modules.message import message
-from modules.kit import generate_slack_message
+from modules.workflow import workflow_step
 
-from slack_sdk import WebClient
-import json
 from modules.upload import source
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
@@ -35,20 +31,7 @@ select_all_db(app)
 register_modal_handlers(app) # Slackのフォーム
 generator_answer_gpt(app) # @GPTでChatGPTを起動
 message(app)
-
-slack_client = WebClient(token=SLACK_BOT_TOKEN)
-slack_message = generate_slack_message()
-response = slack_client.chat_postMessage(
-    channel="C067ALJLXRQ",
-    blocks=slack_message["blocks"]
-)
-print("起動しました")
-
-@app.action("send_button-action")
-def handle_send_button_action(ack, body, logger):
-    input_text = body["view"]["state"]["values"]["block_id"]["plain_text_input-action"]["value"]
-    logger.info(f"入力された文字列: {input_text}")
-    ack()
+workflow_step(app)
 
 # アプリを起動します
 if __name__ == "__main__":
