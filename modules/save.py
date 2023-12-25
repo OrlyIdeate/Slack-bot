@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from modules.similarity import get_embedding
+from modules.chatgpt import chatgpt
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
@@ -92,3 +93,30 @@ def store_thread(app: App):
             text="保存された内容:\n " + summary_text,
             thread_ts=message_thread_ts  # スレッドのタイムスタンプを指定
         )
+
+def thread_summary(client, channel_id, thread_ts):
+    """
+    この関数は、指定されたスレッドの要約を生成します。
+    スレッドの全会話を取得し、それを基に要約を作成します。
+    最初のメッセージを基にスレッドのタイトルも生成します。
+
+    引数:
+    client -- Slackのクライアント
+    channel_id -- スレッドが存在するチャンネルのID
+    thread_ts -- 要約するスレッドのタイムスタンプ
+
+    戻り値:
+    summary_text -- スレッドの要約
+    thread_title -- スレッドのタイトル
+    """
+    prev_message = client.conversations_replies(channel=channel_id, ts=thread_ts) # スレッドの情報を取得
+    all_messages = " ".join(msg['text'] for msg in prev_message['messages']) # スレッド内の全会話を取得
+    first_message_text = prev_message['messages'][0]['text'] # スレッドの一番最初のメッセージを取得
+
+    summary_prompt = all_messages + "\n\nこの会話の要約し、課題と結論をできるだけ短くまとめてください。" # 全会話を基に要約を求めるプロンプト作成
+    summary_text = chatgpt(summary_prompt) # GPTへ要約を問い合わせ
+
+    summary_prompt = first_message_text + "\n\nこの会話の要約して。" # 最初のメッセージを基に要約を求めるプロンプト作成
+    thread_title = chatgpt(summary_prompt) # スレッドのタイトルを生成
+
+    return summary_text, thread_title
