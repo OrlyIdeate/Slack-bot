@@ -45,20 +45,21 @@ def generator_answer_gpt(app: App):
 
 
 def chatgpt(message):
-        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
-        message_text = message
+    """引数に渡した内容をChat-GPT4に入力し、回答を返す。
 
-        chat_completion = openai_client.chat.completions.create(
-            messages=[{"role": "user", "content": message_text}],
-            model="gpt-4"
-        )
+    引数:
+        message (str): Chat-GPT4に入力するプロンプト
 
-        response_text = chat_completion.choices[0].message.content
-        top_5_similar_texts = get_top_5_similar_texts(message_text)
-        response = []
-        response.append(kit_generate1(response_text))
-        now=1
-        for similarity, content, url, date in top_5_similar_texts:
-            response.append(kit_generate3("*内容* : " + content + "\n*日付* : " + str(date) + "\n*url* : <"+ url +"|こちらから飛べます>", now))
-            now+=1
-        return response
+    返り値:
+        str: Chat-GPT4が生成した回答
+    """
+    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+    chat_completion = openai_client.chat.completions.create(
+        messages=[{"role": "user", "content": message}],
+        model="gpt-4"
+    )
+
+    response = chat_completion.choices[0].message.content
+
+    return response
