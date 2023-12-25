@@ -10,6 +10,7 @@ from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
 from modules.kit import kit_generate2
+from modules.delete import del_message
 
 def register_modal_handlers(app: App):
     @app.action("question")
@@ -43,6 +44,7 @@ def register_modal_handlers(app: App):
             trigger_id=body["trigger_id"],
             view=modal_view
         )
+        del_message(client, body)
 
     @app.view("modal-submit")
     def modal_submit(ack, body, client):
@@ -98,6 +100,7 @@ def register_modal_handlers(app: App):
                 "submit": {"type": "plain_text", "text": "検索"}
             }
         )
+        del_message(client, body)
 
     @app.view("search_modal")
     def handle_search_submission(ack, body, client, view):
@@ -127,7 +130,6 @@ def register_modal_handlers(app: App):
             for category in categories
         ])
 
-        
 
         try:
             client.views_open(
@@ -154,6 +156,8 @@ def register_modal_handlers(app: App):
             )
         except SlackApiError as e:
             print(f"Error opening modal: {e}")
+
+        del_message(client, body)
 
     selected_categories = {}
 
@@ -315,6 +319,8 @@ def register_modal_handlers(app: App):
             )
         except SlackApiError as e:
             print(f"Error updating modal: {e}")
+
+        del_message(client, body)
 
     @app.action("category_selection")
     def handle_selection(ack, body, client):
