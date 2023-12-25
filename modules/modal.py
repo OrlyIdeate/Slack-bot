@@ -9,9 +9,10 @@ from modules.chatgpt import chatgpt
 from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
+from modules.kit import kit_generate2
 
 def register_modal_handlers(app: App):
-    @app.action("modal-shortcut")
+    @app.action("question")
     # Chat-GPTに質問するモーダル
     def open_modal(ack, body, client):
         ack()
@@ -57,16 +58,27 @@ def register_modal_handlers(app: App):
             channel=channel_id,
             text=f"受け取った質問: {question}"
         )
-
+        ruizi = kit_generate2()["blocks"]
         client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread['ts'],
-            text=response_text
+            blocks=response_text[0]["blocks"]
+        )
+        client.chat_postMessage(
+            channel=channel_id,
+            thread_ts=thread['ts'],
+            blocks=ruizi
+        )
+        for i in range (5):
+            client.chat_postMessage(
+            channel=channel_id,
+            thread_ts=thread['ts'],
+            blocks=response_text[i+1]["blocks"]
         )
 
 
 
-    @app.action("open_search_modal")
+    @app.action("search")
     def open_search_modal(ack, body, client):
         ack()
         client.views_open(

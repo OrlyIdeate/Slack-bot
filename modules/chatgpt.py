@@ -8,6 +8,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from modules.similarity import get_top_5_similar_texts
+from modules.kit import kit_generate1
+from modules.kit import kit_generate2
+from modules.kit import kit_generate3
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
@@ -84,11 +87,13 @@ def chatgpt(message):
             messages=[{"role": "user", "content": message_text}],
             model="gpt-4"
         )
+
         response_text = chat_completion.choices[0].message.content
-
         top_5_similar_texts = get_top_5_similar_texts(message_text)
-        response_text+= "\n類似度が高い順:\n\n"
+        response = []
+        response.append(kit_generate1(response_text))
+        now=1
         for similarity, content, url, date in top_5_similar_texts:
-            response_text+=f"Content: {content}, URL: {url}, Date: {date}\n"
-
-        return response_text
+            response.append(kit_generate3("*内容* : " + content + "\n*日付* : " + str(date) + "\n*url* : <"+ url +"|こちらから飛べます>", now))
+            now+=1
+        return response
