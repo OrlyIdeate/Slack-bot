@@ -42,13 +42,13 @@ def get_top_5_similar_texts(message_text):
         }
     db_connection = mysql.connector.connect(**config)
     cursor = db_connection.cursor()
-    query = "SELECT content, vector, url, date FROM phese4;"
+    query = "SELECT content, vector, url, date, category FROM phese4;"
     cursor.execute(query)
     rows = cursor.fetchall()
     similarity_list = []
-    for content, vector_bytes, url, date in rows:
+    for content, vector_bytes, url, date, category in rows:
         vector2 = pickle.loads(vector_bytes)
         similarity = cosine_similarity(vector1, vector2)
-        similarity_list.append((similarity, content, url, date))
+        similarity_list.append((similarity, content, url, date, category))
     similarity_list.sort(reverse=True)
     return similarity_list[:5]
