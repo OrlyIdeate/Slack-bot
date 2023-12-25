@@ -29,7 +29,6 @@ from modules.kit import kit_generate3
 
 from slack_sdk import WebClient
 import json
-from modules.upload import source
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.getenv("SLACK_APP_TOKEN")
