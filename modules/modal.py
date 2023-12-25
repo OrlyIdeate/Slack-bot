@@ -1,3 +1,4 @@
+import json
 from slack_bolt import App
 
 # .env読み込み
@@ -40,32 +41,68 @@ def register_modal_handlers(app: App):
             channel=channel_id,
             text=f"受け取った質問: {question}"
         )
+
         notion=client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread['ts'],
             text="生成しています。少々お待ちください..."
         )
+
         response_text = chatgpt(question)
+
         client.chat_delete(
             channel=channel_id,
             ts=notion['ts']
         )
-        ruizi = kit_generate2()["blocks"]
+
+        with open("json/response_question.json") as f:
+            answer_view = json.load(f)["blocks"]
+
+        answer_view[2]["elements"][0]["text"] = str(response_text)
+
+        notion=client.chat_postMessage(
+            channel=channel_id,
+            thread_ts=thread['ts'],
+            blocks=answer_view
+        )
+
+        with open("json/similarity_list.json") as f:
+            similar_view = json.load(f)["blocks"]
+        similar = get_top_5_similar_texts(question)
+        for _, content, url, date, category in similar:
+            similar_view.append({"type": "divider"})
+            similar_view.append(
+                {
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*<{url}|{content}>*"
+                        }
+                    ]
+                }
+            )
+            similar_view.append(
+                {
+                    "type": "section",
+                    "fields": [
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*カテゴリ:* \n {category}"
+                        },
+                        {
+                            "type": "mrkdwn",
+                            "text": f"*追加日:* \n {date}"
+                        }
+                    ]
+                }
+            )
+
+
         client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread['ts'],
-            blocks=response_text[0]["blocks"]
-        )
-        client.chat_postMessage(
-            channel=channel_id,
-            thread_ts=thread['ts'],
-            blocks=ruizi
-        )
-        for i in range (5):
-            client.chat_postMessage(
-            channel=channel_id,
-            thread_ts=thread['ts'],
-            blocks=response_text[i+1]["blocks"]
+            blocks=similar_view
         )
 
 
@@ -276,3 +313,14 @@ def register_modal_handlers(app: App):
         # 保存された内容とカテゴリーをユーザーに通知
         response_message = f"保存された内容は以下です:\n内容: {content}\nURL: <{url}|Link>\nカテゴリー: {category}"
         client.chat_postMessage(channel=body["user"]["id"], text=response_message)
+
+    # スレッドをDBに保存するためのモーダルを開くショートカット
+    @app.message_shortcut("save")
+    def open_save_modal(ack, body, client):
+        ack()
+        with open("json/save_modal.json") as f:
+            modal_view = json.load(f)
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view=modal_view
+        )
