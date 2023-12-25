@@ -1,0 +1,20 @@
+{
+    "blocks":[
+        {
+            "type": "input",
+            "block_id": "select_ch",
+            "element": {
+                "type": "channels_select",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "チャンネルを選んでください"
+                },
+                "action_id": "select_ch"
+            },
+            "label": {
+                "type": "plain_text",
+                "text": "ワークフローを使用するチャンネル"
+            }
+        }
+    ]
+}

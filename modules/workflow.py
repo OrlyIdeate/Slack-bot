@@ -1,76 +1,40 @@
+import json
 from slack_bolt.workflows.step import WorkflowStep
-
-# .env読み込み
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from modules.kit import generate_slack_message
-
-
 def workflow_step(app):
-    # WorkflowStep 定義
-
+    # WorkflowStepの定義
     def edit(ack, configure):
         ack()
-
-        blocks = [
-            {
-                "type": "input",
-                "block_id": "select_ch",
-                "element": {
-                    "type": "channels_select",
-                    "placeholder": {
-                        "type": "plain_text",
-                        "text": "チャンネルを選んでください"
-                    },
-                    "action_id": "select_ch"
-                },
-                "label": {
-                    "type": "plain_text",
-                    "text": "ワークフローを使用するチャンネル"
-                }
-            }
-        ]
-        configure(blocks=blocks)
-
-
-
+        with open("json/workflow_step_edit.json") as f:
+            configure(blocks=json.load(f)["blocks"])
 
     def save(ack, view, update):
         ack()
-
-        values = view["state"]["values"]
-        channel_id = values["select_ch"]["select_ch"]["selected_channel"]
-
-        inputs = {
-            "channel": {"value": channel_id}
-        }
-        update(inputs=inputs)
-
-
-
-
+        update(
+            inputs={
+            "channel": {
+                "value": view["state"]["values"]["select_ch"]["select_ch"]["selected_channel"]
+                }
+            }
+        )
 
     def execute(ack, client, step, complete):
         ack()
-        ch_id = step["inputs"]["channel"]["value"]
-
-        messages = generate_slack_message()["blocks"]
-
-        response = client.chat_postMessage(
-            channel=ch_id,
-            blocks=messages
-        )
-
-
+        with open("json/first_message.json") as f:
+            response = client.chat_postMessage(
+                channel=step["inputs"]["channel"]["value"],
+                blocks=json.load(f)["blocks"]
+            )
         complete(outputs={})
 
-    # WorkflowStep の新しいインスタンスを作成する
+    # 新しいWorkflowStepインスタンスの作成とリスナーの設定
     ws = WorkflowStep(
         callback_id="workflow-step",
         edit=edit,
         save=save,
         execute=execute,
     )
-    # ワークフローステップを渡してリスナーを設定する
     app.step(ws)
