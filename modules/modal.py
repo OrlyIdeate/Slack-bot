@@ -4,22 +4,21 @@ from slack_bolt import App
 from dotenv import load_dotenv
 load_dotenv()
 
-
+from slack_sdk.errors import SlackApiError
 from modules.chatgpt import chatgpt
 from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
-from modules.delete import del_message
 
 def register_modal_handlers(app: App):
-    @app.action("question")
+    @app.action("modal-shortcut")
     # Chat-GPTに質問するモーダル
     def open_modal(ack, body, client):
         ack()
         # モーダルを送信する
         modal_view = {
             "type": "modal",
-            "callback_id": "send_question",
+            "callback_id": "modal-submit",
             "title": {"type": "plain_text", "text": "Chat-GPTに質問"},
             "submit": {"type": "plain_text", "text": "送信"},
             # 見た目の調整は https://app.slack.com/block-kit-builder を使うと便利です
@@ -44,9 +43,7 @@ def register_modal_handlers(app: App):
             view=modal_view
         )
 
-        del_message(client, body)
-
-    @app.view("send_question")
+    @app.view("modal-submit")
     def modal_submit(ack, body, client):
         ack()
         # フォーム（モーダル）で受け取った質問が入ってる変数
@@ -69,14 +66,14 @@ def register_modal_handlers(app: App):
 
 
 
-    @app.action("search")
+    @app.action("open_search_modal")
     def open_search_modal(ack, body, client):
         ack()
         client.views_open(
             trigger_id=body["trigger_id"],
             view={
                 "type": "modal",
-                "callback_id": "searching",
+                "callback_id": "search_modal",
                 "title": {"type": "plain_text", "text": "検索"},
                 "blocks": [
                     {
@@ -90,9 +87,7 @@ def register_modal_handlers(app: App):
             }
         )
 
-        del_message(client, body)
-
-    @app.view("searching")
+    @app.view("search_modal")
     def handle_search_submission(ack, body, client, view):
         ack()
         search_query = view["state"]["values"]["search_query"]["input"]["value"]
@@ -112,41 +107,212 @@ def register_modal_handlers(app: App):
     @app.action("db_list")
     def open_modal(ack, body, client):
         ack()
-        client.views_open(
-            trigger_id=body["trigger_id"],
-            view={
-                "type": "modal",
-                "title": {"type": "plain_text", "text": "全ナレッジ"},
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {"type": "mrkdwn", "text": db_list()[:300]},
-                    }
-                ],
-            },
-        )
-        del_message(client, body)
+        categories = get_unique_categories()
+
+        category_options = [{"text": {"type": "plain_text", "text": "All"}, "value": "All"}]
+        category_options.extend([
+            {"text": {"type": "plain_text", "text": category}, "value": category}
+            for category in categories
+        ])
+
+        
+
+        try:
+            client.views_open(
+                trigger_id=body["trigger_id"],
+                view={
+                    "type": "modal",
+                    "callback_id": "category_selection_modal",
+                    "title": {"type": "plain_text", "text": "カテゴリー選択"},
+                    "submit": {"type": "plain_text", "text": "送信"},
+                    "blocks": [
+                        {
+                            "type": "input",
+                            "block_id": "category_selection_block",
+                            "element": {
+                                "type": "static_select",
+                                "placeholder": {"type": "plain_text", "text": "カテゴリーを選択してください"},
+                                "options": category_options,
+                                "action_id": "category_select"
+                            },
+                            "label": {"type": "plain_text", "text": "カテゴリー"}
+                        }
+                    ]
+                }
+            )
+        except SlackApiError as e:
+            print(f"Error opening modal: {e}")
+
+    selected_categories = {}
+
+    @app.view("category_selection_modal")
+    def handle_category_selection(ack, body, client, view):
+        ack()
+        user_id = body["user"]["id"]  # ユーザーIDを取得
+        selected_category = view["state"]["values"]["category_selection_block"]["category_select"]["selected_option"]["value"]
+        selected_categories[user_id] = selected_category
+        page_number = 0
+        page_size = 5
+        response_text = db_list(selected_category, page_number, page_size)
+
+        new_modal_payload = {
+            "type": "modal",
+            "title": {"type": "plain_text", "text": "全ナレッジ"},
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": response_text},
+                },
+                # ページネーション用のボタンを追加
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "前へ"},
+                            "action_id": "prev_page",
+                            "value": str(page_number - 1)
+                        },
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "次へ"},
+                            "action_id": "next_page",
+                            "value": str(page_number + 1)
+                        }
+                    ]
+                },
+            ],
+        }
+
+        # 新しいモーダルを開く
+        try:
+            response = client.views_open(
+                trigger_id=body["trigger_id"],  # トリガーIDの使用
+                view=new_modal_payload
+            )
+        except SlackApiError as e:
+            print("Error opening new modal:", e.response["error"])
+
+
+
+    @app.action("prev_page")
+    @app.action("next_page")
+    def handle_pagination_action(ack, body, client, action):
+        ack()
+        page_number = int(action["value"])
+        page_size = 5
+        user_id = body["user"]["id"]  # ユーザーIDを取得
+        selected_category = selected_categories.get(user_id)
+        if action["action_id"] == "next_page":
+            page_number += 1
+        elif action["action_id"] == "prev_page":
+            page_number -= 1
+
+        new_page_data = db_list(selected_category, page_number, page_size)
+
+        # モーダルを新しいビューで更新
+        try:
+            client.views_update(
+                view_id=body["view"]["id"],
+                view={
+                    "type": "modal",
+                    "title": {"type": "plain_text", "text": "全ナレッジ"},
+                    "blocks": [
+                        {
+                            "type": "section",
+                            "text": {"type": "mrkdwn", "text": new_page_data},
+                        },
+                        # ページネーション用のボタンを追加
+                        {
+                            "type": "actions",
+                            "elements": [
+                                {
+                                    "type": "button",
+                                    "text": {"type": "plain_text", "text": "前へ"},
+                                    "action_id": "prev_page",
+                                    "value": str(page_number - 1)
+                                },
+                                {
+                                    "type": "button",
+                                    "text": {"type": "plain_text", "text": "次へ"},
+                                    "action_id": "next_page",
+                                    "value": str(page_number + 1)
+                                }
+                            ]
+                        }
+                    ],
+                }
+            )
+        except SlackApiError as e:
+            print(f"Error opening modal: {e}")
 
 
     @app.action("upload")
     def open_modal(ack, body, client):
         ack()
-        del_message(client, body)
         categories = get_unique_categories()  # データベースからカテゴリーを取得
 
-        if categories == ["カテゴリーがありません"]:
-            # カテゴリー入力フィールドを定義
-            category_block = {
-                "type": "input",
-                "block_id": "category-block",
-                "element": {
-                    "type": "plain_text_input",
-                    "action_id": "category_input",
-                    "placeholder": {"type": "plain_text", "text": "新しいカテゴリーを入力してください"},
-                    "initial_value": "null"
-                },
-                "label": {"type": "plain_text", "text": "カテゴリー"}
-            }
+        category_options = [{
+            "text": {"type": "plain_text", "text": category},
+            "value": category
+        } for category in categories]
+
+        try:
+            client.views_open(
+                trigger_id=body["trigger_id"],
+                view={
+                    "type": "modal",
+                    "callback_id": "modal-identifier",
+                    "title": {"type": "plain_text", "text": "アップロード"},
+                    "blocks": [
+                        {
+                            "type": "section",
+                            "block_id": "category_selection_block",
+                            "text": {"type": "mrkdwn", "text": "どのようなカテゴリーのものをアップロードしますか？"},
+                            "accessory": {
+                                "type": "radio_buttons",
+                                "options": [
+                                    {
+                                        "text": {"type": "plain_text", "text": "登録されたカテゴリーを選ぶ"},
+                                        "value": "choose_category"
+                                    },
+                                    {
+                                        "text": {"type": "plain_text", "text": "新しくカテゴリーを入力する"},
+                                        "value": "enter_category"
+                                    }
+                                ],
+                                "action_id": "category_selection"
+                            }
+                        },
+                        {
+                            "type": "section",
+                            "block_id": "registered_category_block",
+                            "text": {"type": "mrkdwn", "text": "登録されているカテゴリー:"},
+                            "accessory": {
+                                "type": "static_select",
+                                "placeholder": {
+                                    "type": "plain_text",
+                                    "text": "カテゴリーを選択"
+                                },
+                                "options": category_options,
+                                "action_id": "registered_category_select"
+                            }
+                        }
+                    ]
+                }
+            )
+        except SlackApiError as e:
+            print(f"Error updating modal: {e}")
+
+    @app.action("category_selection")
+    def handle_selection(ack, body, client):
+        ack()
+        categories = get_unique_categories()
+        user_selection = body['actions'][0]['selected_option']['value']
+        category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
+
+        if user_selection == 'choose_category':
+            # 「カテゴリーを選ぶ」が選択された場合の処理
             modal_view_up = {
                         "type": "modal",
                         "callback_id": "modal-submit_up",
@@ -172,39 +338,21 @@ def register_modal_handlers(app: App):
                                 },
                                 "label": {"type": "plain_text", "text": "URLを入力してください"}
                             },
-                            category_block  # カテゴリーブロックを追加
+                            {
+                                "type": "input",
+                                "block_id": "category-select-block",
+                                "element": {
+                                    "type": "static_select",
+                                    "action_id": "category_select",
+                                    "placeholder": {"type": "plain_text", "text": "カテゴリーを選択してください"},
+                                    "options": category_options
+                                },
+                                "label": {"type": "plain_text", "text": "カテゴリーを選択"}
+                            }
                         ]
                     }
-
         else:
-            category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
-            category_options.insert(0, {"text": {"type": "plain_text", "text": "null"}, "value": "none"})
-            category_select_block = {
-                "type": "input",
-                "block_id": "category-select-block",
-                "element": {
-                    "type": "static_select",
-                    "action_id": "category_select",
-                    "placeholder": {"type": "plain_text", "text": "カテゴリーを選択してください"},
-                    "options": category_options
-                },
-                "label": {"type": "plain_text", "text": "カテゴリーを選択"}
-            }
-
-            # カテゴリー入力フィールドを定義
-            category_input_block = {
-                "type": "input",
-                "block_id": "category-input-block",
-                "element": {
-                    "type": "plain_text_input",
-                    "action_id": "category_input",
-                    "placeholder": {"type": "plain_text", "text": "新しいカテゴリーを入力してください"},
-                    "initial_value": "null"
-                },
-                "label": {"type": "plain_text", "text": "または新しいカテゴリーを入力"}
-            }
-
-            # モーダルビューを構築
+            # 「カテゴリーを入力する」が選択された場合の処理
             modal_view_up = {
                         "type": "modal",
                         "callback_id": "modal-submit_up",
@@ -230,39 +378,53 @@ def register_modal_handlers(app: App):
                                 },
                                 "label": {"type": "plain_text", "text": "URLを入力してください"}
                             },
-                            category_select_block,
-                            category_input_block # カテゴリーブロックを追加
+                            {
+                                "type": "input",
+                                "block_id": "category-input-block",
+                                "element": {
+                                    "type": "plain_text_input",
+                                    "action_id": "category_input",
+                                    "placeholder": {"type": "plain_text", "text": "新しいカテゴリーを入力してください"},
+                                },
+                                "label": {"type": "plain_text", "text": "または新しいカテゴリーを入力"}
+                            }
+
                         ]
                     }
-
-        client.views_open(
-            trigger_id=body["trigger_id"],
-            view=modal_view_up
-        )
+        try:
+            client.views_update(
+                trigger_id=body["trigger_id"],
+                view_id=body["view"]["id"], # 追加: 現在のモーダルビューID
+                view=modal_view_up
+            )
+        except SlackApiError as e:
+            print(f"Error updating modal: {e}")
 
     @app.view("modal-submit_up")  # モーダルのcallback_idに合わせて設定
     def handle_modal_submission(ack, body, client, view, logger):
         ack()
 
-        print(view)
-
         # モーダルからの入力値を取得
         content = view["state"]["values"]["content-block"]["content_input"]["value"]
         url = view["state"]["values"]["url-block"]["url_input"]["value"]
-        selected_category = view["state"]["values"]["category-select-block"]["category_select"]["selected_option"]["value"]
 
-        # category-input-block から入力された値を取得
-        input_category = view["state"]["values"]["category-input-block"]["category_input"]["value"]
+        # 選択されたカテゴリーまたは入力されたカテゴリーを取得
+        try:
+            selected_category = view["state"]["values"]["category-select-block"]["category_select"]["selected_option"]["value"]
+        except KeyError:
+            selected_category = None
+
+        try:
+            input_category = view["state"]["values"]["category-input-block"]["category_input"]["value"]
+        except KeyError:
+            input_category = None
 
         # カテゴリーの決定ロジック
-        if input_category != "null":
-            category = input_category
-        else:
-            category = selected_category
+        category = input_category or selected_category
 
         # upload関数を呼び出してデータベースに保存
         upload(content, url, category)
 
         # 保存された内容とカテゴリーをユーザーに通知
-        response_message = f"保存された内容は以下です:\n内容: {content}\nカテゴリー: {category}"
+        response_message = f"保存された内容は以下です:\n内容: {content}\nURL: <{url}|Link>\nカテゴリー: {category}"
         client.chat_postMessage(channel=body["user"]["id"], text=response_message)
