@@ -54,11 +54,19 @@ def register_modal_handlers(app: App):
         # 入力されたデータをチャンネルに送信する
         channel_id = "C067ALJLXRQ"  # メッセージを送信するチャンネルのIDに置き換えてください
 
-        response_text = chatgpt(question)
-
         thread = client.chat_postMessage(
             channel=channel_id,
             text=f"受け取った質問: {question}"
+        )
+        notion=client.chat_postMessage(
+            channel=channel_id,
+            thread_ts=thread['ts'],
+            text="生成しています。少々お待ちください..."
+        )
+        response_text = chatgpt(question)
+        client.chat_delete(
+            channel=channel_id,
+            ts=notion['ts']
         )
         ruizi = kit_generate2()["blocks"]
         client.chat_postMessage(
