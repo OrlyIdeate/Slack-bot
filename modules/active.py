@@ -1,85 +1,39 @@
-import os
 from slack_bolt import App
-from slack_sdk.web import WebClient
-import mysql.connector
-import openai
+from modules.chatgpt import chatgpt # chat-gptの回答を生成する関数
+from modules.DB import execute_query # クエリを実行する関数
 
-from dotenv import load_dotenv
-load_dotenv()
+def active_start(thread_id, question, url, status="稼働中"):
+    """スレッドのステータスを稼働中にする
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
-
-def active_start(thread_id, question, url, status):
-    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
-    # データベース接続設定
-    config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-        }
-    db_connection = mysql.connector.connect(**config)
-    cursor = db_connection.cursor()
-
-    summary_completion = openai_client.chat.completions.create(
-        messages=[{"role": "user", "content": question}],
-        model="gpt-4"
-    )
-    summary_text = summary_completion.choices[0].message.content
-
-    # データベースにデータを挿入するクエリ
-    insert_query = """
-    INSERT INTO active_monitoring (thread_id, title, url, status)
-    VALUES (%s, %s, %s, %s)
+    引数:
+        thread_id (str): スレッドのID
+        question (str): chat-gptへの質問
+        url (str): メッセージ・スレッドのURL
+        status (str, optional): 何も渡さなくていい. デフォルト値"稼働中".
     """
-    cursor.execute(insert_query, (thread_id, summary_text, url, status))
-    db_connection.commit()
-    cursor.close()
-    db_connection.close()
+    answer = chatgpt(question) # chat-gptの回答を生成
+    query = "INSERT INTO active_monitoring (thread_id, title, url, status) VALUES (%s, %s, %s, %s);" # データベースにデータを挿入するクエリ
+    execute_query(query, (thread_id, answer, url, status)) # クエリ実行
+
 
 def active_end(thread_id):
-    # データベース接続設定
-    config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-        }
-    db_connection = mysql.connector.connect(**config)
-    cursor = db_connection.cursor()
+    """スレッドのステータスを終了にする
 
-    update_query = """
-    UPDATE active_monitoring
-    SET status = '終了'
-    WHERE thread_id = %s
+    引数:
+        thread_id (str): スレッドのID
     """
-    cursor.execute(update_query, (thread_id,))
-    db_connection.commit()
-    cursor.close()
-    db_connection.close()
+    query = "UPDATE active_monitoring SET status = '終了' WHERE thread_id = %s;"
+    execute_query(query, (thread_id))
+
 
 def get_thread_info():
-    # データベース接続設定
-    config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-        }
-    db_connection = mysql.connector.connect(**config)
-    cursor = db_connection.cursor()
+    """稼働中のスレッドを取得する
 
-    # スレッド情報を取得するクエリ
-    query = """
-    SELECT title, url
-    FROM active_monitoring
-    WHERE status != '終了'
+    Returns:
+        list: 稼働中のスレッドの title, url が格納されたリスト
     """
-    cursor.execute(query)
-    result = cursor.fetchall()
-    cursor.close()
-    db_connection.close()
+    query = "SELECT title, url FROM active_monitoring WHERE status != '終了';"
+    result= execute_query(query)
     return result
 
 def thread_monitor(app: App):
