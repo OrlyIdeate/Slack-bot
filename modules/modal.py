@@ -12,7 +12,7 @@ from modules.show import db_list
 from modules.upload import upload, get_unique_categories
 from modules.kit import kit_generate2
 from modules.delete import del_message
-import json
+from modules.save import get_thread_title, get_thread_summary
 
 def register_modal_handlers(app: App):
     @app.action("question")
@@ -316,11 +316,74 @@ def register_modal_handlers(app: App):
 
     # スレッドをDBに保存するためのモーダルを開くショートカット
     @app.message_shortcut("save")
-    def open_save_modal(ack, body, client):
+    def select_save_modal(ack, body, client):
         ack()
+
+        ch_id = body["channel"]["id"]
+        thread_ts = body["message"]["thread_ts"]
+
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)
+
+        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts},_"
         client.views_open(
             trigger_id=body["trigger_id"],
+            view=modal_view["select"]
+        )
+
+
+    @app.action("self")
+    def title_save_modal(ack, body, client, logger):
+        ack()
+        ch_id, thread_ts, _ = body["view"]["private_metadata"].split(",")
+
+        with open("json/save_modal.json") as f:
+            modal_view = json.load(f)["self"]
+        modal_view["private_metadata"] = f"{ch_id},{thread_ts},self"
+        client.views_update(
+            view_id=body.get("view").get("id"),
+            hash=body.get("view").get("hash"),
             view=modal_view
         )
+
+    @app.action("generate")
+    def generate_title_modal(ack, body, client):
+        ack()
+        print(body["view"]["private_metadata"])
+        ch_id, thread_ts, _ = body["view"]["private_metadata"].split(",")
+        with open("json/save_modal.json") as f:
+            modal_view = json.load(f)
+        modal_view["loading"]["private_metadata"] = f"{ch_id},{thread_ts},_"
+
+        # まず「処理中...」である旨を伝える
+        client.views_update(
+            view_id=body.get("view").get("id"),
+            hash=body.get("view").get("hash"),
+            view=modal_view["loading"]
+        )
+
+        title = get_thread_title(client, ch_id, thread_ts)
+        modal_view["generate"]["blocks"][1]["text"]["text"] = f"```{title}```"
+        modal_view["generate"]["private_metadata"] = f"{ch_id},{thread_ts},{title}"
+        client.views_update(
+            view_id=body.get("view").get("id"),
+            view=modal_view["generate"]
+        )
+
+    @app.view("save_submit")
+    def modal_submit(ack, body, client):
+        ack()
+        # フォーム（モーダル）で受け取った質問が入ってる変数
+        ch_id, thread_ts, title = body["view"]["private_metadata"].split(",")
+        if title == "self":
+            title = body["view"]["state"]["values"]["title"]["title_input"]["value"]
+        print(ch_id, thread_ts, title)
+
+        # client.chat_postMessage(
+        #         channel=ch_id,
+        #         thread_ts=thread_ts,
+        #         text=get_thread_summary(client, ch_id, thread_ts)
+        #     )
+
+
+
