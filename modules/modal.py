@@ -1,5 +1,6 @@
-import json
+import json, pickle
 from slack_bolt import App
+from datetime import datetime
 
 # .env読み込み
 from dotenv import load_dotenv
@@ -7,13 +8,14 @@ load_dotenv()
 
 from slack_sdk.errors import SlackApiError
 from modules.chatgpt import chatgpt
-from modules.similarity import get_top_5_similar_texts
+from modules.similarity import get_top_5_similar_texts, get_embedding
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
 from modules.kit import kit_generate2
 from modules.delete import del_message
 from modules.active import active_start
 from modules.save import get_thread_title, get_thread_summary
+from modules.DB import execute_query
 
 def register_modal_handlers(app: App):
     @app.action("question")
@@ -59,9 +61,9 @@ def register_modal_handlers(app: App):
         with open("json/response_question.json") as f:
             answer_view = json.load(f)["blocks"]
 
-        answer_view[2]["elements"][0]["text"] = str(response_text)
+        answer_view[2]["elements"][0]["text"] = response_text
 
-        notion=client.chat_postMessage(
+        client.chat_postMessage(
             channel=channel_id,
             thread_ts=thread['ts'],
             blocks=answer_view
@@ -325,14 +327,14 @@ def register_modal_handlers(app: App):
     @app.message_shortcut("save")
     def select_save_modal(ack, body, client):
         ack()
-
         ch_id = body["channel"]["id"]
         thread_ts = body["message"]["thread_ts"]
+        team_domain = body["team"]["domain"]
 
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)
 
-        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts},_"
+        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}"
         client.views_open(
             trigger_id=body["trigger_id"],
             view=modal_view["select"]
@@ -342,11 +344,11 @@ def register_modal_handlers(app: App):
     @app.action("self")
     def title_save_modal(ack, body, client, logger):
         ack()
-        ch_id, thread_ts, _ = body["view"]["private_metadata"].split(",")
+        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",")
 
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)["self"]
-        modal_view["private_metadata"] = f"{ch_id},{thread_ts},self"
+        modal_view["private_metadata"] = f"{ch_id},{thread_ts},self,{team_domain}"
         client.views_update(
             view_id=body.get("view").get("id"),
             hash=body.get("view").get("hash"),
@@ -356,11 +358,10 @@ def register_modal_handlers(app: App):
     @app.action("generate")
     def generate_title_modal(ack, body, client):
         ack()
-        print(body["view"]["private_metadata"])
-        ch_id, thread_ts, _ = body["view"]["private_metadata"].split(",")
+        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",")
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)
-        modal_view["loading"]["private_metadata"] = f"{ch_id},{thread_ts},_"
+        modal_view["loading"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}"
 
         # まず「処理中...」である旨を伝える
         client.views_update(
@@ -371,7 +372,7 @@ def register_modal_handlers(app: App):
 
         title = get_thread_title(client, ch_id, thread_ts)
         modal_view["generate"]["blocks"][1]["text"]["text"] = f"```{title}```"
-        modal_view["generate"]["private_metadata"] = f"{ch_id},{thread_ts},{title}"
+        modal_view["generate"]["private_metadata"] = f"{ch_id},{thread_ts},{title},{team_domain}"
         client.views_update(
             view_id=body.get("view").get("id"),
             view=modal_view["generate"]
@@ -379,18 +380,48 @@ def register_modal_handlers(app: App):
 
     @app.view("save_submit")
     def modal_submit(ack, body, client):
-        ack()
+        with open("json/save_modal.json") as f:
+            modal_view = json.load(f)
+        ack(
+            response_action="update",
+            view=modal_view["end_loading"]
+        )
+
+
+
         # フォーム（モーダル）で受け取った質問が入ってる変数
-        ch_id, thread_ts, title = body["view"]["private_metadata"].split(",")
+        ch_id, thread_ts, title, team_domain = body["view"]["private_metadata"].split(",")
         if title == "self":
             title = body["view"]["state"]["values"]["title"]["title_input"]["value"]
-        print(ch_id, thread_ts, title)
 
-        # client.chat_postMessage(
-        #         channel=ch_id,
-        #         thread_ts=thread_ts,
-        #         text=get_thread_summary(client, ch_id, thread_ts)
-        #     )
+        # スレッドのURLを作成
+        url = f"https://{team_domain}.slack.com/archives/{ch_id}/p{thread_ts}"
 
+        date = datetime.now().date()
+        vector = pickle.dumps(get_embedding(title))
+
+        modal_view["end"]["blocks"][2]["elements"][0]["text"] = f"<{url}|{title}>"
+        modal_view["end"]["blocks"][3]["fields"][0]["text"] += "スレッド"
+        modal_view["end"]["blocks"][3]["fields"][1]["text"] += str(date)
+
+        execute_query(f"INSERT INTO phese4 (content, vector, url, date, category) VALUES (%s, %s, %s, %s, %s);", (title, vector, url, date, "スレッド"))
+
+        client.views_update(
+            view_id=body.get("view").get("id"),
+            view=modal_view["end"]
+        )
+
+        summary = get_thread_summary(client, ch_id, thread_ts)
+        summary, question, conclusion = summary.split("\n\n")
+        modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = question[3:]
+        modal_view["post_summary"]["blocks"][4]["elements"][0]["text"] = summary[3:]
+        modal_view["post_summary"]["blocks"][7]["elements"][0]["text"] = conclusion[3:]
+
+
+        client.chat_postMessage(
+            channel=ch_id,
+            thread_ts=thread_ts,
+            blocks=modal_view["post_summary"]["blocks"]
+        )
 
 
