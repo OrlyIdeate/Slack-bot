@@ -15,7 +15,6 @@ from datetime import datetime
 
 # modulesフォルダのユーザー定義関数をインポート
 from modules.modal import register_modal_handlers # Slackのフォームの関数
-from modules.shortcut import register_modal_shortcuts
 from modules.chatgpt import generator_answer_gpt # @GPTでChatGPTを起動させる関数
 from modules.search import look_for
 from modules.show import select_all_db
@@ -42,7 +41,6 @@ look_for(app)
 store_thread(app)
 select_all_db(app)
 register_modal_handlers(app) # Slackのフォーム
-register_modal_shortcuts(app)
 generator_answer_gpt(app) # @GPTでChatGPTを起動
 message(app)
 workflow_step(app)
