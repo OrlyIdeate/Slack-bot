@@ -1,0 +1,54 @@
+{
+    "type": "modal",
+    "callback_id": "modal-identifier",
+    "title": {
+        "type": "plain_text",
+        "text": "アップロード"
+    },
+    "blocks": [
+        {
+            "type": "section",
+            "block_id": "category_selection_block",
+            "text": {
+                "type": "mrkdwn",
+                "text": "どのようなカテゴリーのものをアップロードしますか？"
+            },
+            "accessory": {
+                "type": "radio_buttons",
+                "options": [
+                    {
+                        "text": {
+                            "type": "plain_text",
+                            "text": "登録されたカテゴリーを選ぶ"
+                        },
+                        "value": "choose_category"
+                    },
+                    {
+                        "text": {
+                            "type": "plain_text",
+                            "text": "新しくカテゴリーを入力する"
+                        },
+                        "value": "enter_category"
+                    }
+                ],
+                "action_id": "category_selection"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "registered_category_block",
+            "text": {
+                "type": "mrkdwn",
+                "text": "登録されているカテゴリー:"
+            },
+            "accessory": {
+                "type": "static_select",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "カテゴリーを選択"
+                },
+                "action_id": "registered_category_select"
+            }
+        }
+    ]
+}

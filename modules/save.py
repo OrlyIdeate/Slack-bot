@@ -51,7 +51,7 @@ def store_thread(app: App):
         first_message_text = first_message_response['messages'][0]['text']
 
         # 要約を求めるプロンプト作成
-        summary_prompt = first_message_text + "\n\nこの会話の要約して。"
+        summary_prompt = first_message_text + "\n\nこの内容をタイトル風にして。"
 
         # GPTへ要約を問い合わせ
         summary_completion = openai_client.chat.completions.create(

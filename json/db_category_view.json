@@ -1,0 +1,30 @@
+{
+    "type": "modal",
+    "callback_id": "category_selection_modal",
+    "title": {
+        "type": "plain_text",
+        "text": "カテゴリー選択"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "送信"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "category_selection_block",
+            "element": {
+                "type": "static_select",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "カテゴリーを選択してください"
+                },
+                "action_id": "category_select"
+            },
+            "label": {
+                "type": "plain_text",
+                "text": "カテゴリー"
+            }
+        }
+    ]
+}

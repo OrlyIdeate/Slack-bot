@@ -11,39 +11,21 @@ from modules.show import db_list
 from modules.upload import upload, get_unique_categories
 from modules.kit import kit_generate2
 from modules.delete import del_message
+import json
 
 def register_modal_handlers(app: App):
     @app.action("question")
-    # Chat-GPTに質問するモーダル
     def open_modal(ack, body, client):
         ack()
-        # モーダルを送信する
-        modal_view = {
-            "type": "modal",
-            "callback_id": "modal-submit",
-            "title": {"type": "plain_text", "text": "Chat-GPTに質問"},
-            "submit": {"type": "plain_text", "text": "送信"},
-            # 見た目の調整は https://app.slack.com/block-kit-builder を使うと便利です
-            "blocks": [
-                {
-                    "type": "input",
-                    "block_id": "question-block",
-                    "element": {
-                        "type": "plain_text_input",
-                        "action_id": "input_field"
-                    },
-                    "label": {
-                        "type": "plain_text",
-                        "text": "質問を入力してください"
-                    }
-                }
-            ]
-        }
+        # 'question_view.json' からモーダルの定義を読み込む
+        with open('json/question_view.json', 'r') as file:
+            modal_view = json.load(file)
 
         client.views_open(
             trigger_id=body["trigger_id"],
             view=modal_view
         )
+        # del_message関数の実装内容に基づいて適宜修正
         del_message(client, body)
 
     @app.view("modal-submit")
@@ -87,27 +69,18 @@ def register_modal_handlers(app: App):
         )
 
 
-
     @app.action("search")
     def open_search_modal(ack, body, client):
         ack()
+        # JSONファイルからモーダルの定義を読み込む
+        with open('json/search_view.json', 'r') as file:
+            search_view = json.load(file)
+
         client.views_open(
             trigger_id=body["trigger_id"],
-            view={
-                "type": "modal",
-                "callback_id": "search_modal",
-                "title": {"type": "plain_text", "text": "検索"},
-                "blocks": [
-                    {
-                        "type": "input",
-                        "block_id": "search_query",
-                        "label": {"type": "plain_text", "text": "検索クエリ"},
-                        "element": {"type": "plain_text_input", "action_id": "input"}
-                    }
-                ],
-                "submit": {"type": "plain_text", "text": "検索"}
-            }
+            view=search_view
         )
+        # del_message関数の実装内容に基づいて適宜修正
         del_message(client, body)
 
     @app.view("search_modal")
@@ -138,33 +111,21 @@ def register_modal_handlers(app: App):
             for category in categories
         ])
 
-
         try:
+            with open('json/db_category_view.json', 'r') as file:
+                modal_view = json.load(file)
+
+            # カテゴリのオプションを動的に追加
+            modal_view["blocks"][0]["element"]["options"] = category_options
+
             client.views_open(
                 trigger_id=body["trigger_id"],
-                view={
-                    "type": "modal",
-                    "callback_id": "category_selection_modal",
-                    "title": {"type": "plain_text", "text": "カテゴリー選択"},
-                    "submit": {"type": "plain_text", "text": "送信"},
-                    "blocks": [
-                        {
-                            "type": "input",
-                            "block_id": "category_selection_block",
-                            "element": {
-                                "type": "static_select",
-                                "placeholder": {"type": "plain_text", "text": "カテゴリーを選択してください"},
-                                "options": category_options,
-                                "action_id": "category_select"
-                            },
-                            "label": {"type": "plain_text", "text": "カテゴリー"}
-                        }
-                    ]
-                }
+                view=modal_view
             )
         except SlackApiError as e:
             print(f"Error opening modal: {e}")
 
+        # del_message関数の実装内容に基づいて適宜修正
         del_message(client, body)
 
     selected_categories = {}
@@ -172,46 +133,25 @@ def register_modal_handlers(app: App):
     @app.view("category_selection_modal")
     def handle_category_selection(ack, body, client, view):
         ack()
-        user_id = body["user"]["id"]  # ユーザーIDを取得
+        user_id = body["user"]["id"]
         selected_category = view["state"]["values"]["category_selection_block"]["category_select"]["selected_option"]["value"]
         selected_categories[user_id] = selected_category
         page_number = 0
         page_size = 5
         response_text = db_list(selected_category, page_number, page_size)
 
-        new_modal_payload = {
-            "type": "modal",
-            "title": {"type": "plain_text", "text": "全ナレッジ"},
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {"type": "mrkdwn", "text": response_text},
-                },
-                # ページネーション用のボタンを追加
-                {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {"type": "plain_text", "text": "前へ"},
-                            "action_id": "prev_page",
-                            "value": str(page_number - 1)
-                        },
-                        {
-                            "type": "button",
-                            "text": {"type": "plain_text", "text": "次へ"},
-                            "action_id": "next_page",
-                            "value": str(page_number + 1)
-                        }
-                    ]
-                },
-            ],
-        }
+        # 'db_page_view.json' からモーダルの定義を読み込む
+        with open('json/db_page_view.json', 'r') as file:
+            new_modal_payload = json.load(file)
 
-        # 新しいモーダルを開く
+        # 動的なコンテンツを更新
+        new_modal_payload["blocks"][0]["text"]["text"] = response_text
+        new_modal_payload["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
+        new_modal_payload["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
+
         try:
             response = client.views_open(
-                trigger_id=body["trigger_id"],  # トリガーIDの使用
+                trigger_id=body["trigger_id"],
                 view=new_modal_payload
             )
         except SlackApiError as e:
@@ -225,8 +165,9 @@ def register_modal_handlers(app: App):
         ack()
         page_number = int(action["value"])
         page_size = 5
-        user_id = body["user"]["id"]  # ユーザーIDを取得
+        user_id = body["user"]["id"]
         selected_category = selected_categories.get(user_id)
+
         if action["action_id"] == "next_page":
             page_number += 1
         elif action["action_id"] == "prev_page":
@@ -234,38 +175,19 @@ def register_modal_handlers(app: App):
 
         new_page_data = db_list(selected_category, page_number, page_size)
 
-        # モーダルを新しいビューで更新
+        # 'db_move_view.json' からモーダルの定義を読み込む
+        with open('json/db_move_view.json', 'r') as file:
+            new_modal_payload = json.load(file)
+
+        # 動的なコンテンツを更新
+        new_modal_payload["blocks"][0]["text"]["text"] = new_page_data
+        new_modal_payload["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
+        new_modal_payload["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
+
         try:
             client.views_update(
                 view_id=body["view"]["id"],
-                view={
-                    "type": "modal",
-                    "title": {"type": "plain_text", "text": "全ナレッジ"},
-                    "blocks": [
-                        {
-                            "type": "section",
-                            "text": {"type": "mrkdwn", "text": new_page_data},
-                        },
-                        # ページネーション用のボタンを追加
-                        {
-                            "type": "actions",
-                            "elements": [
-                                {
-                                    "type": "button",
-                                    "text": {"type": "plain_text", "text": "前へ"},
-                                    "action_id": "prev_page",
-                                    "value": str(page_number - 1)
-                                },
-                                {
-                                    "type": "button",
-                                    "text": {"type": "plain_text", "text": "次へ"},
-                                    "action_id": "next_page",
-                                    "value": str(page_number + 1)
-                                }
-                            ]
-                        }
-                    ],
-                }
+                view=new_modal_payload
             )
         except SlackApiError as e:
             print(f"Error opening modal: {e}")
@@ -282,52 +204,20 @@ def register_modal_handlers(app: App):
         } for category in categories]
 
         try:
+            with open('json/upload_view.json', 'r') as file:
+                upload_view = json.load(file)
+
+            # カテゴリーオプションを動的に追加
+            upload_view["blocks"][1]["accessory"]["options"] = category_options
+
             client.views_open(
                 trigger_id=body["trigger_id"],
-                view={
-                    "type": "modal",
-                    "callback_id": "modal-identifier",
-                    "title": {"type": "plain_text", "text": "アップロード"},
-                    "blocks": [
-                        {
-                            "type": "section",
-                            "block_id": "category_selection_block",
-                            "text": {"type": "mrkdwn", "text": "どのようなカテゴリーのものをアップロードしますか？"},
-                            "accessory": {
-                                "type": "radio_buttons",
-                                "options": [
-                                    {
-                                        "text": {"type": "plain_text", "text": "登録されたカテゴリーを選ぶ"},
-                                        "value": "choose_category"
-                                    },
-                                    {
-                                        "text": {"type": "plain_text", "text": "新しくカテゴリーを入力する"},
-                                        "value": "enter_category"
-                                    }
-                                ],
-                                "action_id": "category_selection"
-                            }
-                        },
-                        {
-                            "type": "section",
-                            "block_id": "registered_category_block",
-                            "text": {"type": "mrkdwn", "text": "登録されているカテゴリー:"},
-                            "accessory": {
-                                "type": "static_select",
-                                "placeholder": {
-                                    "type": "plain_text",
-                                    "text": "カテゴリーを選択"
-                                },
-                                "options": category_options,
-                                "action_id": "registered_category_select"
-                            }
-                        }
-                    ]
-                }
+                view=upload_view
             )
         except SlackApiError as e:
             print(f"Error updating modal: {e}")
 
+        # del_message関数の実装内容に基づいて適宜修正
         del_message(client, body)
 
     @app.action("category_selection")
@@ -338,89 +228,21 @@ def register_modal_handlers(app: App):
         category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
 
         if user_selection == 'choose_category':
-            # 「カテゴリーを選ぶ」が選択された場合の処理
-            modal_view_up = {
-                        "type": "modal",
-                        "callback_id": "modal-submit_up",
-                        "title": {"type": "plain_text", "text": "情報を入力"},
-                        "submit": {"type": "plain_text", "text": "送信"},
-                        "blocks": [
-                            {
-                                "type": "input",
-                                "block_id": "content-block",
-                                "element": {
-                                    "type": "plain_text_input",
-                                    "action_id": "content_input",
-                                    "multiline": True
-                                },
-                                "label": {"type": "plain_text", "text": "内容を入力してください"}
-                            },
-                            {
-                                "type": "input",
-                                "block_id": "url-block",
-                                "element": {
-                                    "type": "plain_text_input",
-                                    "action_id": "url_input"
-                                },
-                                "label": {"type": "plain_text", "text": "URLを入力してください"}
-                            },
-                            {
-                                "type": "input",
-                                "block_id": "category-select-block",
-                                "element": {
-                                    "type": "static_select",
-                                    "action_id": "category_select",
-                                    "placeholder": {"type": "plain_text", "text": "カテゴリーを選択してください"},
-                                    "options": category_options
-                                },
-                                "label": {"type": "plain_text", "text": "カテゴリーを選択"}
-                            }
-                        ]
-                    }
-        else:
-            # 「カテゴリーを入力する」が選択された場合の処理
-            modal_view_up = {
-                        "type": "modal",
-                        "callback_id": "modal-submit_up",
-                        "title": {"type": "plain_text", "text": "情報を入力"},
-                        "submit": {"type": "plain_text", "text": "送信"},
-                        "blocks": [
-                            {
-                                "type": "input",
-                                "block_id": "content-block",
-                                "element": {
-                                    "type": "plain_text_input",
-                                    "action_id": "content_input",
-                                    "multiline": True
-                                },
-                                "label": {"type": "plain_text", "text": "内容を入力してください"}
-                            },
-                            {
-                                "type": "input",
-                                "block_id": "url-block",
-                                "element": {
-                                    "type": "plain_text_input",
-                                    "action_id": "url_input"
-                                },
-                                "label": {"type": "plain_text", "text": "URLを入力してください"}
-                            },
-                            {
-                                "type": "input",
-                                "block_id": "category-input-block",
-                                "element": {
-                                    "type": "plain_text_input",
-                                    "action_id": "category_input",
-                                    "placeholder": {"type": "plain_text", "text": "新しいカテゴリーを入力してください"},
-                                },
-                                "label": {"type": "plain_text", "text": "または新しいカテゴリーを入力"}
-                            }
+            # JSONファイルからモーダルの定義を読み込む
+            with open('json/upload_selection_view.json', 'r') as file:
+                modal_view_up = json.load(file)
 
-                        ]
-                    }
+            # カテゴリーオプションを動的に追加
+            modal_view_up["blocks"][2]["element"]["options"] = category_options
+        else:
+            # JSONファイルからモーダルの定義を読み込む
+            with open('json/upload_input_view.json', 'r') as file:
+                modal_view_up = json.load(file)
+
         try:
             client.views_update(
                 trigger_id=body["trigger_id"],
-                view_id=body["view"]["id"], # 追加: 現在のモーダルビューID
+                view_id=body["view"]["id"],
                 view=modal_view_up
             )
         except SlackApiError as e:

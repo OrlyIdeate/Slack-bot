@@ -1,0 +1,55 @@
+{
+    "type": "modal",
+    "callback_id": "modal-submit_up",
+    "title": {
+        "type": "plain_text",
+        "text": "情報を入力"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "送信"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "content-block",
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "content_input",
+                "multiline": true
+            },
+            "label": {
+                "type": "plain_text",
+                "text": "内容を入力してください"
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "url-block",
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "url_input"
+            },
+            "label": {
+                "type": "plain_text",
+                "text": "URLを入力してください"
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "category-select-block",
+            "element": {
+                "type": "static_select",
+                "action_id": "category_select",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "カテゴリーを選択してください"
+                }
+            },
+            "label": {
+                "type": "plain_text",
+                "text": "カテゴリーを選択"
+            }
+        }
+    ]
+}

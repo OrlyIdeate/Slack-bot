@@ -1,0 +1,27 @@
+{
+    "type": "modal",
+    "callback_id": "modal-submit",
+    "title": {
+        "type": "plain_text",
+        "text": "Chat-GPTに質問"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "送信"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "question-block",
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "input_field",
+                "multiline": true
+            },
+            "label": {
+                "type": "plain_text",
+                "text": "質問を入力してください"
+            }
+        }
+    ]
+}

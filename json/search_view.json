@@ -1,0 +1,26 @@
+{
+    "type": "modal",
+    "callback_id": "search_modal",
+    "title": {
+        "type": "plain_text",
+        "text": "検索"
+    },
+    "blocks": [
+        {
+            "type": "input",
+            "block_id": "search_query",
+            "label": {
+                "type": "plain_text",
+                "text": "検索クエリ"
+            },
+            "element": {
+                "type": "plain_text_input",
+                "action_id": "input"
+            }
+        }
+    ],
+    "submit": {
+        "type": "plain_text",
+        "text": "検索"
+    }
+}
