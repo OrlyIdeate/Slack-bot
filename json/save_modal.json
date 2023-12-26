@@ -1,37 +1,204 @@
 {
-	"type": "modal",
-	"title": {
-		"type": "plain_text",
-		"text": "スレッドを保存",
-		"emoji": true
-	},
-	"submit": {
-		"type": "plain_text",
-		"text": "保存",
-		"emoji": true
-	},
-	"close": {
-		"type": "plain_text",
-		"text": "キャンセル",
-		"emoji": true
-	},
-	"blocks": [
-		{
-			"type": "input",
-			"element": {
-				"type": "plain_text_input",
-				"placeholder": {
-					"type": "plain_text",
-					"text": "ここにデフォルトのテキストが表示されます"
-				},
-				"multiline": true,
-				"action_id": "plain_text_input-action"
+	"select":{
+		"type": "modal",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"close": {
+			"type": "plain_text",
+			"text": "キャンセル",
+			"emoji": true
+		},
+		"private_metadata": "",
+		"blocks": [
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "*スレッドのタイトルを設定します。*\n*設定方法を選んでください。*"
+				}
 			},
-			"label": {
-				"type": "plain_text",
-				"text": "このスレッドのタイトルは？",
-				"emoji": true
+			{
+				"type": "actions",
+				"elements": [
+					{
+						"type": "button",
+						"text": {
+							"type": "plain_text",
+							"text": "自分でタイトルをつける",
+							"emoji": true
+						},
+						"action_id": "self"
+					},
+					{
+						"type": "button",
+						"text": {
+							"type": "plain_text",
+							"text": "自動生成でタイトルをつける",
+							"emoji": true
+						},
+						"action_id": "generate"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "rich_text",
+				"elements": [
+					{
+						"type": "rich_text_section",
+						"elements": [
+							{
+								"type": "text",
+								"text": "スレッドの保存時、スレッド内に以下の内容が投稿されます。\n"
+							}
+						]
+					},
+					{
+						"type": "rich_text_list",
+						"style": "bullet",
+						"elements": [
+							{
+								"type": "rich_text_section",
+								"elements": [
+									{
+										"type": "text",
+										"text": "会話の要約：スレッド内の会話の要約 "
+									}
+								]
+							},
+							{
+								"type": "rich_text_section",
+								"elements": [
+									{
+										"type": "text",
+										"text": "課題：一番最初の質問の要約"
+									}
+								]
+							},
+							{
+								"type": "rich_text_section",
+								"elements": [
+									{
+										"type": "text",
+										"text": "結論：最終的な回答や結論 "
+									}
+								]
+							}
+						]
+					}
+				]
 			}
-		}
-	]
+		]
+	},
+	"self":{
+		"type": "modal",
+		"callback_id": "save_submit",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"submit": {
+			"type": "plain_text",
+			"text": "保存",
+			"emoji": true
+		},
+		"close": {
+			"type": "plain_text",
+			"text": "キャンセル",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "input",
+				"block_id": "title",
+				"element": {
+					"type": "plain_text_input",
+					"placeholder": {
+						"type": "plain_text",
+						"text": "スレッドの内容が推測しやすいタイトルを入力してください"
+					},
+					"multiline": true,
+					"action_id": "title_input"
+				},
+				"label": {
+					"type": "plain_text",
+					"text": "スレッドのタイトル",
+					"emoji": true
+				}
+			}
+		]
+	},
+	"generate":{
+		"type": "modal",
+		"callback_id": "save_submit",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"submit": {
+			"type": "plain_text",
+			"text": "保存する",
+			"emoji": true
+		},
+		"close": {
+			"type": "plain_text",
+			"text": "キャンセル",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "生成したタイトル",
+					"emoji": true
+				}
+			},
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "```title```"
+				}
+			},
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": " "
+				},
+				"accessory": {
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "再生成",
+						"emoji": true
+					},
+					"value": "regenerate",
+					"action_id": "generate"
+				}
+			}
+		]
+	},
+	"loading":{
+		"type": "modal",
+		"callback_id": "generate",
+		"title": {"type": "plain_text", "text": "スレッドを保存"},
+		"blocks": [
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "タイトルを生成中..."
+				}
+			}
+		]
+	}
 }
