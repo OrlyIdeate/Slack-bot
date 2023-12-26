@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from modules.similarity import get_embedding
+from modules.active import active_end
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
@@ -92,3 +93,5 @@ def store_thread(app: App):
             text="保存された内容:\n " + summary_text,
             thread_ts=message_thread_ts  # スレッドのタイムスタンプを指定
         )
+
+        active_end(message_thread_ts)
