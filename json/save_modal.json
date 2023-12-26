@@ -42,56 +42,6 @@
 						"action_id": "generate"
 					}
 				]
-			},
-			{
-				"type": "divider"
-			},
-			{
-				"type": "rich_text",
-				"elements": [
-					{
-						"type": "rich_text_section",
-						"elements": [
-							{
-								"type": "text",
-								"text": "スレッドの保存時、スレッド内に以下の内容が投稿されます。\n"
-							}
-						]
-					},
-					{
-						"type": "rich_text_list",
-						"style": "bullet",
-						"elements": [
-							{
-								"type": "rich_text_section",
-								"elements": [
-									{
-										"type": "text",
-										"text": "会話の要約：スレッド内の会話の要約 "
-									}
-								]
-							},
-							{
-								"type": "rich_text_section",
-								"elements": [
-									{
-										"type": "text",
-										"text": "課題：一番最初の質問の要約"
-									}
-								]
-							},
-							{
-								"type": "rich_text_section",
-								"elements": [
-									{
-										"type": "text",
-										"text": "結論：最終的な回答や結論 "
-									}
-								]
-							}
-						]
-					}
-				]
 			}
 		]
 	},
@@ -198,6 +148,141 @@
 					"type": "plain_text",
 					"text": "タイトルを生成中..."
 				}
+			}
+		]
+	},
+	"end_loading":{
+		"type": "modal",
+		"title": {"type": "plain_text", "text": "スレッドを保存"},
+		"blocks": [
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "保存中..."
+				}
+			}
+		]
+	},
+	"end":{
+		"type": "modal",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"close": {
+			"type": "plain_text",
+			"text": "閉じる",
+			"emoji": true
+		},
+		"private_metadata": "",
+		"blocks": [
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "保存しました",
+					"emoji": true
+				}
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "<url|title>"
+					}
+				]
+			},
+			{
+				"type": "section",
+				"fields": [
+					{
+						"type": "mrkdwn",
+						"text": "*カテゴリー*\n"
+					},
+					{
+						"type": "mrkdwn",
+						"text": "*追加日*\n"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "*以下の内容をスレッドに送信します。*\n・質問：一番最初の質問の内容をまとめます。\n・要約：スレッド内の会話をまとめます。\n・結論：質問に対する最終的な回答をまとめます。"
+					}
+				]
+			}
+		]
+	},
+	"post_summary": {
+		"blocks": [
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "質問",
+					"emoji": true
+				}
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "質問"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "要約",
+					"emoji": true
+				}
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "要約"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "結論",
+					"emoji": true
+				}
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "結論"
+					}
+				]
 			}
 		]
 	}
