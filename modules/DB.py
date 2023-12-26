@@ -4,8 +4,11 @@ import mysql.connector
 from dotenv import load_dotenv
 load_dotenv()
 
-# データベース接続設定を関数にまとめる
+
 def get_db_config():
+    """
+    データベース接続設定
+    """
     return {
         'user': os.getenv('DB_USER'),
         'password': os.getenv('DB_PASS'),
@@ -13,20 +16,21 @@ def get_db_config():
         'database': os.getenv('DB_NAME'),
     }
 
-# データベース接続を行う関数を作成
 def connect_to_db():
+    """
+    データベース接続
+    """
     config = get_db_config()
     return mysql.connector.connect(**config)
 
-# SQLクエリを実行し、結果を返す関数
 def execute_query(query):
     """SQLクエリを実行し、結果を返します。
 
     引数:
-        query (_type_): _description_
+        query : str型のSQLクエリ
 
     戻り値:
-        str: _description_
+        result: list型の結果
     """
     connection = connect_to_db()
     cursor = connection.cursor()
