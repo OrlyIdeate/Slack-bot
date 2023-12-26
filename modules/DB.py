@@ -23,20 +23,31 @@ def connect_to_db():
     config = get_db_config()
     return mysql.connector.connect(**config)
 
-def execute_query(query):
+def execute_query(query, values=None):
     """SQLクエリを実行し、結果を返します。
 
     引数:
         query : str型のSQLクエリ
+        value : INSERT・UPDATEの場合はタプル型に格納した実際の値
 
     戻り値:
         result: list型の結果
     """
     connection = connect_to_db()
     cursor = connection.cursor()
-    cursor.execute(query)
-    result = cursor.fetchall()
-    connection.close()
-    return result
-
-
+    try:
+        # クエリ実行
+        if values:
+            cursor.execute(query, values)
+        else:
+            cursor.execute(query)
+        result = cursor.fetchall()
+        # 変更を確定
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"クエリ実行エラー: {err}")
+    finally:
+        # 接続をクローズ
+        cursor.close()
+        connection.close()
+        return result
