@@ -26,6 +26,7 @@ from modules.kit import generate_slack_message
 from modules.kit import kit_generate1
 from modules.kit import kit_generate2
 from modules.kit import kit_generate3
+from modules.active import thread_monitor
 
 from slack_sdk import WebClient
 import json
@@ -36,6 +37,7 @@ SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
+thread_monitor(app)
 source(app)
 look_for(app)
 store_thread(app)

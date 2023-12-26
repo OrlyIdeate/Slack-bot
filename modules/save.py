@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from modules.similarity import get_embedding
+from modules.active import active_end
 from modules.chatgpt import chatgpt
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -93,6 +94,8 @@ def store_thread(app: App):
             text="保存された内容:\n " + summary_text,
             thread_ts=message_thread_ts  # スレッドのタイムスタンプを指定
         )
+
+        active_end(message_thread_ts)
 
 def get_thread_title(client, channel_id, thread_ts):
     """

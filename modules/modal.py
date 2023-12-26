@@ -12,6 +12,7 @@ from modules.show import db_list
 from modules.upload import upload, get_unique_categories
 from modules.kit import kit_generate2
 from modules.delete import del_message
+from modules.active import active_start
 from modules.save import get_thread_title, get_thread_summary
 
 def register_modal_handlers(app: App):
@@ -104,6 +105,12 @@ def register_modal_handlers(app: App):
             thread_ts=thread['ts'],
             blocks=similar_view
         )
+
+        summary_prompt = question + "\n\nこの内容をタイトル風にして。"
+        thread_id = thread['ts']  # スレッドIDを取得
+        thread_url = f"https://dec-ph4-hq.slack.com/archives/{channel_id}/p{thread_id.replace('.', '')}?thread_ts={thread_id.replace('.', '')}&cid={channel_id}"
+        active_start(thread_id, summary_prompt, thread_url, "稼働中")
+
 
 
     @app.action("search")
