@@ -94,11 +94,11 @@ def register_modal_handlers(app: App):
                     "fields": [
                         {
                             "type": "mrkdwn",
-                            "text": f"*カテゴリ:* \n {category}"
+                            "text": f"*カテゴリ:*  {category}"
                         },
                         {
                             "type": "mrkdwn",
-                            "text": f"*追加日:* \n {date}"
+                            "text": f"*追加日:*  {date}"
                         }
                     ]
                 }

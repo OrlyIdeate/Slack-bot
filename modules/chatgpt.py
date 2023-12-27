@@ -22,13 +22,15 @@ def generator_answer_gpt(app: App):
         message_text = event.get('text') # 質問の内容を取得
 
         # スレッド内の会話を取得
-        message_text += "\nという質問は質問として十分ですか？不十分ですか？十分のときはそれが十分であることを言う必要はなく、質問の回答だけを表示してください。不十分であれば回答はせずに不十分である旨と何が不十分なのかを教えてください。ただし、この質問が出るまでの会話の内容は以下のとおりです。各行に{ユーザー名}:{チャット内容}の形で表しています。\n"
+        # message_text += "\nという質問は質問として十分ですか？不十分ですか？十分のときはそれが十分であることを言う必要はなく、質問の回答だけを表示してください。不十分であれば回答はせずに不十分である旨と何が不十分なのかを教えてください。ただし、この質問が出るまでの会話の内容は以下のとおりです。各行に{ユーザー名}:{チャット内容}の形で表しています。\n"
+        message_text += "\n 過去の会話を踏まえて答えてください。各行に{ユーザー名}:{チャット内容}の形で表しています。\n"
         thread_info = client.conversations_replies(channel=channel_id, ts=thread_ts)
 
         cnt=0 # 類似したコンテンツのメッセージ以外を取得し、message_textに追加
         for i in range(len(thread_info['messages'])):
             if cnt != 1:
-                message_text+=thread_info['messages'][i]['user']+": "+thread_info['messages'][i]['text']+"\n"
+                # message_text+=thread_info['messages'][i]['user']+": "+thread_info['messages'][i]['text']+"\n"
+                message_text+=thread_info['messages'][i]['text']+"\n"
             cnt+=1
 
         client.chat_postMessage(
