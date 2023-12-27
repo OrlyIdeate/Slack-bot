@@ -20,6 +20,7 @@ def register_modal_handlers(app: App):
     def open_modal(ack, body, client):
         ack()
         ch_id = body["channel"]["id"]
+        ts = body["message"]["ts"]
         team_domain = body["team"]["domain"]
         # 'question_view.json' からモーダルの定義を読み込む
         with open('json/question_view.json', 'r') as file:
@@ -31,7 +32,7 @@ def register_modal_handlers(app: App):
             view=modal_view
         )
         # del_message関数の実装内容に基づいて適宜修正
-        del_message(client, body)
+        del_message(ch_id, ts)
 
     @app.view("modal-submit")
     def modal_submit(ack, body, view, client):
@@ -125,8 +126,9 @@ def register_modal_handlers(app: App):
             trigger_id=body["trigger_id"],
             view=search_view
         )
+
         # del_message関数の実装内容に基づいて適宜修正
-        del_message(client, body)
+        del_message(body["channel"]["id"], body["message"]["ts"])
 
     @app.view("search_modal")
     def handle_search_submission(ack, body, client, view):
@@ -170,8 +172,11 @@ def register_modal_handlers(app: App):
         except SlackApiError as e:
             print(f"Error opening modal: {e}")
 
+        ch_id = body["channel"]["id"]
+        ts = body["message"]["ts"]
+
         # del_message関数の実装内容に基づいて適宜修正
-        del_message(client, body)
+        del_message(ch_id, ts)
 
     selected_categories = {}
 
@@ -262,8 +267,11 @@ def register_modal_handlers(app: App):
         except SlackApiError as e:
             print(f"Error updating modal: {e}")
 
+        ch_id = body["channel"]["id"]
+        ts = body["message"]["ts"]
+
         # del_message関数の実装内容に基づいて適宜修正
-        del_message(client, body)
+        del_message(ch_id, ts)
 
     @app.action("category_selection")
     def handle_selection(ack, body, client):
