@@ -137,10 +137,11 @@ def register_modal_handlers(app: App):
         top_5_similar_texts = get_top_5_similar_texts(search_query)
         # 結果を表示
         response_text = "*検索結果*:\n\n"
-        for _, content, url, date in top_5_similar_texts:
+        for similarity, content, url, date, category in top_5_similar_texts:
             response_text += f"*Content:* {content}\n"
             response_text += f"*URL:* <{url}|Link>\n"
-            response_text += f"*Date:* {date}\n\n"
+            response_text += f"*Date:* {date}\n"
+            response_text += f"*Category:* {category}\n\n"
         client.chat_postMessage(
             channel=body["user"]["id"],
             text=response_text
