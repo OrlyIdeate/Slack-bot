@@ -39,9 +39,10 @@ def execute_query(query, values=None):
         # クエリ実行
         if values:
             cursor.execute(query, values)
+            result = None
         else:
             cursor.execute(query)
-        result = cursor.fetchall()
+            result = cursor.fetchall()
         # 変更を確定
         connection.commit()
     except mysql.connector.Error as err:
