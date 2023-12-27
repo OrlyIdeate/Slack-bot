@@ -1,4 +1,4 @@
-import json, pickle
+import json
 from slack_bolt import App
 from datetime import datetime
 
@@ -8,21 +8,23 @@ load_dotenv()
 
 from slack_sdk.errors import SlackApiError
 from modules.chatgpt import chatgpt
-from modules.similarity import get_top_5_similar_texts, get_embedding
+from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
 from modules.delete import del_message
 from modules.active import active_start
 from modules.save import get_thread_title, get_thread_summary
-from modules.DB import execute_query
 
 def register_modal_handlers(app: App):
     @app.action("question")
     def open_modal(ack, body, client):
         ack()
+        ch_id = body["channel"]["id"]
+        team_domain = body["team"]["domain"]
         # 'question_view.json' からモーダルの定義を読み込む
         with open('json/question_view.json', 'r') as file:
             modal_view = json.load(file)
+        modal_view["private_metadata"] = f"{ch_id},{team_domain}"
 
         client.views_open(
             trigger_id=body["trigger_id"],
@@ -32,30 +34,29 @@ def register_modal_handlers(app: App):
         del_message(client, body)
 
     @app.view("modal-submit")
-    def modal_submit(ack, body, client):
+    def modal_submit(ack, body, view, client):
         ack()
+        ch_id, team_domain = view["private_metadata"].split(",")
         # フォーム（モーダル）で受け取った質問が入ってる変数
         question = body["view"]["state"]["values"]["question-block"]["input_field"]["value"]
         # 入力されたデータをチャンネルに送信する
-        channel_id = "C067ALJLXRQ"  # メッセージを送信するチャンネルのIDに置き換えてください
 
         thread = client.chat_postMessage(
-            channel=channel_id,
+            channel=ch_id,
             text=f"受け取った質問: {question}"
         )
 
+        thread_ts=thread["ts"]
+
         notion=client.chat_postMessage(
-            channel=channel_id,
-            thread_ts=thread['ts'],
+            channel=ch_id,
+            thread_ts=thread_ts,
             text="生成しています。少々お待ちください..."
         )
 
         response_text = chatgpt(question)
 
-        client.chat_delete(
-            channel=channel_id,
-            ts=notion['ts']
-        )
+        del_message(ch_id, notion["ts"])
 
         with open("json/response_question.json") as f:
             answer_view = json.load(f)["blocks"]
@@ -63,8 +64,8 @@ def register_modal_handlers(app: App):
         answer_view[2]["elements"][0]["text"] = response_text
 
         client.chat_postMessage(
-            channel=channel_id,
-            thread_ts=thread['ts'],
+            channel=ch_id,
+            thread_ts=thread_ts,
             blocks=answer_view
         )
 
@@ -102,15 +103,14 @@ def register_modal_handlers(app: App):
 
 
         client.chat_postMessage(
-            channel=channel_id,
-            thread_ts=thread['ts'],
+            channel=ch_id,
+            thread_ts=thread_ts,
             blocks=similar_view
         )
 
         summary_prompt = question + "\n\nこの内容をタイトル風にして。"
-        thread_id = thread['ts']  # スレッドIDを取得
-        thread_url = f"https://dec-ph4-hq.slack.com/archives/{channel_id}/p{thread_id.replace('.', '')}?thread_ts={thread_id.replace('.', '')}&cid={channel_id}"
-        active_start(thread_id, summary_prompt, thread_url, "稼働中")
+        url = f"https://{team_domain}.slack.com/archives/{ch_id}/p{thread_ts}" # スレッドのURLを作成
+        active_start(thread_ts , summary_prompt, url, "稼働中")
 
 
 
@@ -397,13 +397,12 @@ def register_modal_handlers(app: App):
         url = f"https://{team_domain}.slack.com/archives/{ch_id}/p{thread_ts}"
 
         date = datetime.now().date()
-        vector = pickle.dumps(get_embedding(title))
 
         modal_view["end"]["blocks"][2]["elements"][0]["text"] = f"<{url}|{title}>"
         modal_view["end"]["blocks"][3]["fields"][0]["text"] += "スレッド"
         modal_view["end"]["blocks"][3]["fields"][1]["text"] += str(date)
 
-        execute_query(f"INSERT INTO phese4 (content, vector, url, date, category) VALUES (%s, %s, %s, %s, %s);", (title, vector, url, date, "スレッド"))
+        upload(title, url, "スレッド")
 
         client.views_update(
             view_id=body.get("view").get("id"),
