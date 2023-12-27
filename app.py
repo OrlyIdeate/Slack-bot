@@ -22,10 +22,6 @@ from modules.save import store_thread
 from modules.message import message
 from modules.workflow import workflow_step
 from modules.upload import source
-from modules.kit import generate_slack_message
-from modules.kit import kit_generate1
-from modules.kit import kit_generate2
-from modules.kit import kit_generate3
 from modules.active import thread_monitor
 
 from slack_sdk import WebClient

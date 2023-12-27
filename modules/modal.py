@@ -11,7 +11,6 @@ from modules.chatgpt import chatgpt
 from modules.similarity import get_top_5_similar_texts, get_embedding
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
-from modules.kit import kit_generate2
 from modules.delete import del_message
 from modules.active import active_start
 from modules.save import get_thread_title, get_thread_summary
