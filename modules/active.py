@@ -16,14 +16,14 @@ def active_start(thread_id, question, url, status="稼働中"):
     execute_query(query, (thread_id, answer, url, status)) # クエリ実行
 
 
-def active_end(thread_id):
+def active_end(url):
     """スレッドのステータスを終了にする
 
     引数:
-        thread_id (str): スレッドのID
+        url (str): スレッドのURL
     """
-    query = "UPDATE active_monitoring SET status = '終了' WHERE thread_id = %s;"
-    execute_query(query, (thread_id))
+    query = "UPDATE active_monitoring SET status = %s WHERE url = %s;"
+    execute_query(query, ("終了", url))
 
 
 def get_thread_info():
@@ -32,7 +32,7 @@ def get_thread_info():
     Returns:
         list: 稼働中のスレッドの title, url が格納されたリスト
     """
-    query = "SELECT title, url FROM active_monitoring WHERE status != '終了';"
+    query = "SELECT url FROM active_monitoring WHERE status != '終了';"
     result= execute_query(query)
     return result
 
