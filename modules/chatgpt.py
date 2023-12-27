@@ -1,54 +1,48 @@
 import os
-from slack_bolt import App
-from slack_sdk.web import WebClient
 import openai
+from slack_bolt import App
 
 # .env読み込み
 from dotenv import load_dotenv
 load_dotenv()
 
-from modules.similarity import get_top_5_similar_texts
-from modules.kit import kit_generate1
-from modules.kit import kit_generate2
-from modules.kit import kit_generate3
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
 def generator_answer_gpt(app: App):
-    @app.message("@GPT")
-    def ret_gpt(message, say):
-        openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
-        slack_client = WebClient(token=SLACK_BOT_TOKEN)
-        message_channel = message['channel']
-        message_thread_ts = message['ts']
-        message_true_thread_ts = message.get('thread_ts')
-        print(message_channel)
-        print("GPTの1が動いています")
-        message_text = message['text']
-        message_text += "\nという質問は質問として十分ですか？不十分ですか？十分のときはそれが十分であることを言う必要はなく、質問の回答だけを表示してください。不十分であれば回答はせずに不十分である旨と何が不十分なのかを教えてください。ただし、この質問が出るまでの会話の内容は以下のとおりです。各行に{ユーザー名}:{チャット内容}の形で表しています。\n"
-        prev_message = slack_client.conversations_replies(channel=message_channel, ts=message_true_thread_ts)
-        for i in range(len(prev_message['messages'])):
-            message_text+=prev_message['messages'][i]['user']+": "+prev_message['messages'][i]['text']+"\n"
-        chat_completion = openai_client.chat.completions.create(
-            messages=[{"role": "user", "content": message_text}],
-            model="gpt-4"
-        )
-        response_text = chat_completion.choices[0].message.content
+    """メンションでの質問に回答する。
 
-        response = slack_client.chat_postMessage(
-            channel=message_channel,
-            text=response_text,
-            thread_ts=message_thread_ts
+    引数:
+        app (App)
+    """
+    @app.event({"type": "app_mention"})
+    def generate_answer(event, client):
+        channel_id = event.get("channel") # チャンネルID取得
+        thread_ts = event.get('thread_ts') # スレッドのタイムスタンプを取得
+        message_text = event.get('text') # 質問の内容を取得
+
+        # スレッド内の会話を取得
+        message_text += "\nという質問は質問として十分ですか？不十分ですか？十分のときはそれが十分であることを言う必要はなく、質問の回答だけを表示してください。不十分であれば回答はせずに不十分である旨と何が不十分なのかを教えてください。ただし、この質問が出るまでの会話の内容は以下のとおりです。各行に{ユーザー名}:{チャット内容}の形で表しています。\n"
+        thread_info = client.conversations_replies(channel=channel_id, ts=thread_ts)
+
+        cnt=0 # 類似したコンテンツのメッセージ以外を取得し、message_textに追加
+        for i in range(len(thread_info['messages'])):
+            if cnt != 1:
+                message_text+=thread_info['messages'][i]['user']+": "+thread_info['messages'][i]['text']+"\n"
+            cnt+=1
+
+        client.chat_postMessage(
+            channel=channel_id,
+            text=chatgpt(message_text),
+            thread_ts=thread_ts
         )
-        return
 
 
 def chatgpt(message):
     """引数に渡した内容をChat-GPT4に入力し、回答を返す。
 
     引数:
-        message (str): Chat-GPT4に入力するプロンプト
+        event (str): Chat-GPT4に入力するプロンプト
 
     返り値:
         str: Chat-GPT4が生成した回答
