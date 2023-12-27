@@ -55,6 +55,15 @@
 					},
 					"value": "upload",
 					"action_id": "upload"
+				},
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "稼働中のスレッド"
+					},
+					"value": "thread_monitor",
+					"action_id": "thread_monitor"
 				}
 			]
 		}
