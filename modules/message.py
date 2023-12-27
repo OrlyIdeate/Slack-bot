@@ -45,7 +45,7 @@ def message(app):
                 # スレッド内に返信を送信
                 client.chat_postMessage(
                     channel=message_channel,
-                    text="話の内容が質問内容からそれていませんか? 今日の晩御飯の話なら別のチャンネルでお願いします。",
+                    text="話の内容が質問内容からそれていませんか?",
                     thread_ts=thread_ts
                 )
             else:
