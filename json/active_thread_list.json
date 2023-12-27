@@ -1,0 +1,41 @@
+{
+    "modal":{
+        "type": "modal",
+        "title": {
+            "type": "plain_text",
+            "text": "稼働中のスレッド一覧",
+            "emoji": true
+        },
+        "close": {
+            "type": "plain_text",
+            "text": "閉じる",
+            "emoji": true
+        },
+        "blocks": []
+    },
+    "block":[
+        {
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*<https://google.com|タイトル>*"
+			}
+		},
+		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*カテゴリ:* \n {category}"
+				},
+				{
+					"type": "mrkdwn",
+					"text": "*追加日:* \n {date}"
+				}
+			]
+		},
+		{
+			"type": "divider"
+		}
+    ]
+}

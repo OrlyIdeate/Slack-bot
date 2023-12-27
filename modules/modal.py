@@ -7,12 +7,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from slack_sdk.errors import SlackApiError
+from modules.active import get_thread_info
 from modules.chatgpt import chatgpt
+from modules.DB import execute_query
 from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
 from modules.upload import upload, get_unique_categories
 from modules.delete import del_message
-from modules.active import active_start
+from modules.active import active_start, active_end
 from modules.save import get_thread_title, get_thread_summary
 
 def register_modal_handlers(app: App):
@@ -412,6 +414,7 @@ def register_modal_handlers(app: App):
         modal_view["end"]["blocks"][3]["fields"][1]["text"] += str(date)
 
         upload(title, url, "スレッド")
+        active_end(url)
 
         client.views_update(
             view_id=body.get("view").get("id"),
@@ -419,7 +422,7 @@ def register_modal_handlers(app: App):
         )
 
         summary = get_thread_summary(client, ch_id, thread_ts)
-        summary, question, conclusion = summary.split("\n\n")
+        summary, question, conclusion = summary.split("\n")
         modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = question[3:]
         modal_view["post_summary"]["blocks"][4]["elements"][0]["text"] = summary[3:]
         modal_view["post_summary"]["blocks"][7]["elements"][0]["text"] = conclusion[3:]
@@ -432,3 +435,29 @@ def register_modal_handlers(app: App):
         )
 
 
+    @app.action("thread_monitor")
+    def thread_monitor_modal(ack, body, client):
+        ack()
+        ch_id = body["channel"]["id"]
+        ts = body["message"]["ts"]
+        active_thread = get_thread_info()
+
+        with open("json/active_thread_list.json") as f:
+            modal_view = json.load(f)
+
+
+
+
+        url = active_thread[0]
+        response = execute_query("SELECT content, category, date FROM phese4 WHERE url = %s;", url)
+        modal_view["block"][0]["text"]["text"] = f"*<{url}|{response[0][0]}>*"
+        modal_view["block"][1]["fields"][0]["text"] = f"*カテゴリ:*\n{response[0][1]}"
+        modal_view["block"][1]["fields"][1]["text"] = f"*追加日:*\n{response[0][2]}"
+        modal_view["modal"]["blocks"].extend(modal_view["block"])
+
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view=modal_view["modal"]
+        )
+
+        del_message(ch_id, ts)
