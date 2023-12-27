@@ -37,9 +37,12 @@ def execute_query(query, values=None):
     cursor = connection.cursor()
     try:
         # クエリ実行
-        if values:
+        if "insert" in query.lower() or "update" in query.lower():
             cursor.execute(query, values)
             result = None
+        elif values:
+            cursor.execute(query, values)
+            result = cursor.fetchall()
         else:
             cursor.execute(query)
             result = cursor.fetchall()
