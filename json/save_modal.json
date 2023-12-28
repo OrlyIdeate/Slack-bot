@@ -190,13 +190,11 @@
 				"type": "divider"
 			},
 			{
-				"type": "context",
-				"elements": [
-					{
-						"type": "mrkdwn",
-						"text": "<url|title>"
-					}
-				]
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "*<google.com|title>*"
+				}
 			},
 			{
 				"type": "section",
