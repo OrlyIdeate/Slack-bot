@@ -5,7 +5,7 @@ import os
 from slack_bolt import App
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-import mysql.connector
+from modules.DB import connect_to_db
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -14,13 +14,7 @@ SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
 
 def db_list(category, page_number, page_size):
-    config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-    }
-    db_connection = mysql.connector.connect(**config)
+    db_connection = connect_to_db()
     cursor = db_connection.cursor()
 
     # クエリの作成

@@ -8,13 +8,10 @@ from modules.chatgpt import chatgpt
 def message(app):
     @app.event("message")
     def distraction_checker(message, client):
-        print("distraction_checkerが動いています")
-
 
         message_channel = message['channel']
         message_ts = message['ts']
         thread_ts = message.get('thread_ts')
-
 
         #スレッドでのチャットが何個目かを取得してthread_countにいれる
         thread_count_query = f"SELECT message_count FROM thread_monitoring WHERE thread_id = '{thread_ts}'"

@@ -3,7 +3,7 @@ import numpy as np
 import openai
 import mysql.connector
 import pickle
-
+from modules.DB import connect_to_db
 # .env読み込み
 from dotenv import load_dotenv
 load_dotenv()
@@ -33,13 +33,7 @@ def cosine_similarity(vec_a, vec_b):
 
 def get_top_5_similar_texts(message_text):
     vector1 = get_embedding(message_text)
-    config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-        }
-    db_connection = mysql.connector.connect(**config)
+    db_connection = connect_to_db()
     cursor = db_connection.cursor()
     query = "SELECT content, vector, url, date, category FROM phase4;"
     cursor.execute(query)
