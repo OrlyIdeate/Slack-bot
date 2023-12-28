@@ -33,7 +33,7 @@ def source(app: App):
         say(f"Saving URL: {url}")
 
         # データベースにデータを挿入
-        insert_query = "INSERT INTO phese4 (content, vector, url, date) VALUES (%s, %s, %s, %s);"
+        insert_query = "INSERT INTO phase4 (content, vector, url, date) VALUES (%s, %s, %s, %s);"
         execute_query(insert_query, (content, vector_bytes, url ,today))
 
         # 生成したURLをSlackチャンネルに返信
@@ -49,7 +49,7 @@ def upload(content, url, category):
     """
     vector = pickle.dumps(get_embedding(content)) # ベクトル化
     today = datetime.now() # 現在の日付
-    insert_query = "INSERT INTO phese4 (content, vector, url, category, date) VALUES (%s, %s, %s, %s, %s);" # クエリ作成
+    insert_query = "INSERT INTO phase4 (content, vector, url, category, date) VALUES (%s, %s, %s, %s, %s);" # クエリ作成
     execute_query(insert_query, (content, vector, url, category, today)) # データベースにデータを挿入
 
 def get_unique_categories():
@@ -58,7 +58,7 @@ def get_unique_categories():
     戻り値:
         list: カテゴリが格納されたリスト
     """
-    categories = execute_query("SELECT DISTINCT category FROM phese4")
+    categories = execute_query("SELECT DISTINCT category FROM phase4")
 
     # ここで None と "null" を除外
     filtered_categories = [category[0] for category in categories if category[0] is not None and category[0] != "null" and category[0] != "none"]

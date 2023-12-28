@@ -41,7 +41,7 @@ def get_top_5_similar_texts(message_text):
         }
     db_connection = mysql.connector.connect(**config)
     cursor = db_connection.cursor()
-    query = "SELECT content, vector, url, date, category FROM phese4;"
+    query = "SELECT content, vector, url, date, category FROM phase4;"
     cursor.execute(query)
     rows = cursor.fetchall()
     similarity_list = []

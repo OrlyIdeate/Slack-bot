@@ -25,7 +25,7 @@ def db_list(category, page_number, page_size):
 
     # クエリの作成
     query = """
-    SELECT content, url, date, category FROM phese4
+    SELECT content, url, date, category FROM phase4
     WHERE category = %s OR %s = 'All'
     ORDER BY date DESC
     """
@@ -60,7 +60,7 @@ def select_all_db(app: App):
         message_thread_ts = message['ts']
 
 
-        response_text = db_list() # phese4テーブルから全情報を取得する
+        response_text = db_list() # phase4テーブルから全情報を取得する
 
         try:
         # スレッド内に返信を送信

@@ -502,7 +502,7 @@ def register_modal_handlers(app: App):
 
 
         url = active_thread[0]
-        response = execute_query("SELECT content, category, date FROM phese4 WHERE url = %s;", url)
+        response = execute_query("SELECT content, category, date FROM phase4 WHERE url = %s;", url)
         modal_view["block"][0]["text"]["text"] = f"*<{url}|{response[0][0]}>*"
         modal_view["block"][1]["fields"][0]["text"] = f"*カテゴリ:*\n{response[0][1]}"
         modal_view["block"][1]["fields"][1]["text"] = f"*追加日:*\n{response[0][2]}"
