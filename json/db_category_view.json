@@ -1,13 +1,13 @@
 {
     "type": "modal",
-    "callback_id": "category_selection_modal",
+    "callback_id": "selected_category",
     "title": {
         "type": "plain_text",
         "text": "カテゴリー選択"
     },
     "submit": {
         "type": "plain_text",
-        "text": "送信"
+        "text": "次へ"
     },
     "blocks": [
         {
