@@ -377,7 +377,7 @@ def register_modal_handlers(app: App):
         with open("json/save_modal.json") as f:
             modal_view = json.load(f) # jsonからmodal_view読込
 
-        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts}, _ {team_domain}" # private_metadataを追加
+        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}" # private_metadataを追加
 
         # モーダルを起動
         client.views_open(
@@ -408,7 +408,7 @@ def register_modal_handlers(app: App):
     @app.action("generate")
     def generate_title_modal(ack, body, client):
         ack()
-        ch_id, thread_ts, _,  team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
+        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
 
         # json読込
         with open("json/save_modal.json") as f:
