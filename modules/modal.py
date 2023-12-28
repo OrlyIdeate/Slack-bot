@@ -140,10 +140,9 @@ def register_modal_handlers(app: App):
         # 結果を表示
         response_text = "*検索結果*:\n\n"
         for similarity, content, url, date, category in top_5_similar_texts:
-            response_text += f"*Content:* {content}\n"
-            response_text += f"*URL:* <{url}|Link>\n"
-            response_text += f"*Date:* {date}\n"
-            response_text += f"*Category:* {category}\n\n"
+            response_text += f"*内容:* <{url}|{content}>\n"
+            response_text += f"*日付:* {date}\n"
+            response_text += f"*カテゴリ:* {category}\n\n"
         client.chat_postMessage(
             channel=body["user"]["id"],
             text=response_text
@@ -245,6 +244,7 @@ def register_modal_handlers(app: App):
         except SlackApiError as e:
             print(f"Error opening modal: {e}")
 
+    upload_timestamp = {}
 
     @app.action("upload")
     def open_modal(ack, body, client):
@@ -276,6 +276,29 @@ def register_modal_handlers(app: App):
         # del_message関数の実装内容に基づいて適宜修正
         del_message(ch_id, ts)
 
+    @app.message_shortcut("upload_thread")
+    def open_modal(ack, body, client):
+        ack()
+        user_id = body["user"]["id"]
+        thread_ts = body["message"]["ts"]
+        upload_timestamp[user_id] = thread_ts
+        # データベースからカテゴリを取得し、オプションリストを作成
+        categories = get_unique_categories()
+        category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
+
+        try:
+            # モーダルのJSON定義を読み込み
+            with open('json/upload_view.json', 'r') as file:
+                upload_view = json.load(file)
+
+            # カテゴリオプションをモーダルに追加
+            upload_view["blocks"][1]["accessory"]["options"] = category_options
+
+            # モーダルを開く
+            client.views_open(trigger_id=body["trigger_id"], view=upload_view)
+        except SlackApiError as e:
+            print(f"Error opening modal: {e}")
+
     @app.action("category_selection")
     def handle_selection(ack, body, client):
         ack()
@@ -304,6 +327,7 @@ def register_modal_handlers(app: App):
         except SlackApiError as e:
             print(f"Error updating modal: {e}")
 
+
     @app.view("modal-submit_up")  # モーダルのcallback_idに合わせて設定
     def handle_modal_submission(ack, body, client, view, logger):
         ack()
@@ -330,8 +354,28 @@ def register_modal_handlers(app: App):
         upload(content, url, category)
 
         # 保存された内容とカテゴリーをユーザーに通知
-        response_message = f"保存された内容は以下です:\n内容: {content}\nURL: <{url}|Link>\nカテゴリー: {category}"
-        client.chat_postMessage(channel=body["user"]["id"], text=response_message)
+        response_message = f"保存された内容は以下です:\n内容: <{url}|{content}>\nカテゴリ: {category}"
+        client.chat_postMessage(channel=body["user"]["id"], text = response_message)
+
+        with open('json/response_message_block.json', 'r') as file:
+            message_block = json.load(file)
+    
+        # プレースホルダーを実際の値で置き換え
+        for block in message_block["blocks"]:
+            if block["type"] == "context":
+                for element in block["elements"]:
+                    element["text"] = element["text"].replace("URL_PLACEHOLDER", url).replace("CONTENT_PLACEHOLDER", content).replace("CATEGORY_PLACEHOLDER", category)
+
+        user_id = body["user"]["id"]
+        if user_id in upload_timestamp and upload_timestamp[user_id]:
+            thread_ts = upload_timestamp[user_id]
+            client.chat_postMessage(
+                channel="C067ALJLXRQ",
+                blocks=message_block["blocks"],
+                thread_ts=thread_ts
+            )
+        if user_id in upload_timestamp:
+            del upload_timestamp[user_id]
 
 
     """
