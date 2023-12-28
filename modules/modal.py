@@ -151,14 +151,29 @@ def register_modal_handlers(app: App):
 
 
     @app.action("db_list")
-    def open_modal(ack, body, client):
+    def open_db_list_first_modal(ack, body, client):
         ack()
-        categories = get_unique_categories()
 
-        category_options = [{"text": {"type": "plain_text", "text": "All"}, "value": "All"}]
+        with open("json/list.json") as f:
+            views = json.load(f)
+
+        if execute_query("SELECT url FROM active_monitoring LIMIT 1;"):
+            views["first_modal"]["blocks"].append(views["active_thread_modal"])
+
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view=views["first_modal"]
+        )
+
+        # del_message(body["channel"]["id"], body["message"]["ts"])
+
+    @app.action("category_select")
+    def category_select(ack, body, client):
+        ack()
+        category_options = []
         category_options.extend([
             {"text": {"type": "plain_text", "text": category}, "value": category}
-            for category in categories
+            for category in get_unique_categories()
         ])
 
         try:
@@ -168,79 +183,80 @@ def register_modal_handlers(app: App):
             # カテゴリのオプションを動的に追加
             modal_view["blocks"][0]["element"]["options"] = category_options
 
-            client.views_open(
-                trigger_id=body["trigger_id"],
+            client.views_update(
+                view_id=body.get("view").get("id"),
                 view=modal_view
             )
         except SlackApiError as e:
             print(f"Error opening modal: {e}")
 
-        ch_id = body["channel"]["id"]
-        ts = body["message"]["ts"]
 
-        # del_message関数の実装内容に基づいて適宜修正
-        del_message(ch_id, ts)
-
-    selected_categories = {}
-
-    @app.view("category_selection_modal")
+    @app.action("selected_category")
+    @app.view("selected_category")
     def handle_category_selection(ack, body, client, view):
-        ack()
-        user_id = body["user"]["id"]
-        selected_category = view["state"]["values"]["category_selection_block"]["category_select"]["selected_option"]["value"]
-        selected_categories[user_id] = selected_category
+        with open("json/list.json") as f:
+            views = json.load(f)
+
+        try:
+            category = view["state"]["values"]["category_selection_block"]["category_select"]["selected_option"]["value"]
+        except TypeError:
+            category = "All"
+
+        ack(
+            response_action="update",
+            view=views["loading_modal"]
+        )
+
         page_number = 0
         page_size = 5
-        response_text = db_list(selected_category, page_number, page_size)
+        response_text = db_list(category, page_number, page_size)
 
         # 'db_page_view.json' からモーダルの定義を読み込む
         with open('json/db_page_view.json', 'r') as file:
-            new_modal_payload = json.load(file)
+            views = json.load(file)
 
         # 動的なコンテンツを更新
-        new_modal_payload["blocks"][0]["text"]["text"] = response_text
-        new_modal_payload["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
-        new_modal_payload["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
+        views["blocks"][0]["text"]["text"] = response_text
+        views["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
+        views["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
+        views["private_metadata"] = category
 
-        try:
-            response = client.views_open(
-                trigger_id=body["trigger_id"],
-                view=new_modal_payload
-            )
-        except SlackApiError as e:
-            print("Error opening new modal:", e.response["error"])
+        client.views_update(
+            view_id=body.get("view").get("id"),
+            view=views
+        )
 
 
 
     @app.action("prev_page")
     @app.action("next_page")
-    def handle_pagination_action(ack, body, client, action):
+    def handle_pagination_action(ack, body, client, view, action):
         ack()
         page_number = int(action["value"])
         page_size = 5
-        user_id = body["user"]["id"]
-        selected_category = selected_categories.get(user_id)
+        category = body["view"]["private_metadata"]
 
         if action["action_id"] == "next_page":
             page_number += 1
         elif action["action_id"] == "prev_page":
             page_number -= 1
 
-        new_page_data = db_list(selected_category, page_number, page_size)
+        new_page_data = db_list(category, page_number, page_size)
 
         # 'db_move_view.json' からモーダルの定義を読み込む
         with open('json/db_move_view.json', 'r') as file:
-            new_modal_payload = json.load(file)
+            views = json.load(file)
 
         # 動的なコンテンツを更新
-        new_modal_payload["blocks"][0]["text"]["text"] = new_page_data
-        new_modal_payload["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
-        new_modal_payload["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
+        views["blocks"][0]["text"]["text"] = new_page_data
+        views["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
+        views["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
+        views["private_metadata"] = category
 
         try:
             client.views_update(
                 view_id=body["view"]["id"],
-                view=new_modal_payload
+                view=views
             )
         except SlackApiError as e:
             print(f"Error opening modal: {e}")
@@ -488,7 +504,7 @@ def register_modal_handlers(app: App):
         )
 
 
-    @app.action("thread_monitor")
+    @app.action("active_thread")
     def thread_monitor_modal(ack, body, client):
         ack()
         ch_id = body["channel"]["id"]

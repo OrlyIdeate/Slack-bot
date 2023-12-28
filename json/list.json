@@ -1,0 +1,145 @@
+{
+	"first_modal":{
+		"type": "modal",
+		"close": {
+			"type": "plain_text",
+			"text": "閉じる",
+			"emoji": true
+		},
+		"title": {
+			"type": "plain_text",
+			"text": "一覧表示",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "今まで保存した全てのナレッジを表示します。\nカテゴリー別にも表示できます。"
+				}
+			},
+			{
+				"type": "actions",
+				"elements": [
+					{
+						"type": "button",
+						"text": {
+							"type": "plain_text",
+							"text": "全て",
+							"emoji": true
+						},
+						"value": "All",
+						"action_id": "selected_category"
+					},
+					{
+						"type": "button",
+						"text": {
+							"type": "plain_text",
+							"text": "カテゴリ別に表示",
+							"emoji": true
+						},
+						"value": "category",
+						"action_id": "category_select"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			}
+		]
+	},
+	"active_thread_modal":{
+		"type": "section",
+		"text": {
+			"type": "mrkdwn",
+			"text": "まだ結論が出ていないスレッドがあります。"
+		},
+		"accessory": {
+			"type": "button",
+			"text": {
+				"type": "plain_text",
+				"text": "稼働中のスレッド",
+				"emoji": true
+			},
+			"value": "active_thread",
+			"action_id": "active_thread"
+		}
+	},
+    "loading_modal":{
+        "type": "modal",
+        "title": {
+            "type": "plain_text",
+            "text": "一覧表示",
+            "emoji": true
+        },
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": "検索中…"
+                }
+            }
+        ]
+    },
+    "data_block":[
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "*<google.com|title>*"
+			},
+			"accessory": {
+				"type": "overflow",
+				"action_id": "overflow_menu",
+				"options": [
+                    {
+						"text": {
+							"type": "plain_text",
+							"text": "編集"
+						},
+						"value": "edit"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "削除"
+						},
+						"value": "delete"
+					}
+				]
+			}
+		},
+		{
+			"type": "section",
+			"fields": [
+				{
+					"type": "mrkdwn",
+					"text": "*カテゴリー*\n{category}"
+				},
+				{
+					"type": "mrkdwn",
+					"text": "*追加日*\n{date}"
+				}
+			]
+		},
+		{
+			"type": "divider"
+		}
+	],
+    "list_modal":{
+        "type": "modal",
+        "close": {
+            "type": "plain_text",
+            "text": "閉じる",
+            "emoji": true
+        },
+        "title": {
+            "type": "plain_text",
+            "text": "一覧表示（全て）",
+            "emoji": true
+        },
+        "blocks": []
+    }
+}
