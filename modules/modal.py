@@ -333,101 +333,154 @@ def register_modal_handlers(app: App):
         response_message = f"保存された内容は以下です:\n内容: {content}\nURL: <{url}|Link>\nカテゴリー: {category}"
         client.chat_postMessage(channel=body["user"]["id"], text=response_message)
 
-    # スレッドをDBに保存するためのモーダルを開くショートカット
+
+    """
+    スレッドをDBに保存するためのモーダルの処理
+
+        1. @app.message_shortcut("save)
+            ここで一番最初に起動するタイトルの設定方法（手動設定 or 自動生成）を選ぶモーダルを起動。
+            channel_id, thread_ts, team_domainを取得し、モーダルビューのprivate_metadataに渡し、データを保持。（"_"が無いとタイトルの再生生成時にエラーになる）
+            private_metadataを含んだモーダルビューを表示させ、ユーザーにスレッドのタイトルの設定方法を選ばせる。
+
+        2. @app.action("self")
+            ここではユーザーが手動でスレッドタイトルを入力し設定するモーダルを表示する。
+            前回のモーダルビューの private_metadata からchannel_id, thread_id, team_domainを取得。
+            private_metadataにユーザがタイトルを付けたことを示す、selfを追加した channel_id, thread_ts, self, team_domainを渡し、データを保持。
+
+        3. @app.action("generate")
+            ここではスレッドタイトルを自動生成するモーダルを起動する。
+            前回のモーダルビューの private_metadata から ch_id, thread_ts, team_domain を取得。
+            生成中を伝えるモーダルビューに private_metadata を渡し、モーダルを開く。
+            GPT-4に問い合わせてタイトルを生成する。
+            生成したタイトルを表示するモーダルビューに生成したタイトルと private_metadata を追加する。
+            生成したタイトルを表示するモーダルを表示する。
+            (このモーダルには再生成ボタンがあり、ユーザーがそれを押すとこのセクションの処理を繰り返す。)
+
+        4. @app.view("save_submit")
+            2か3でsubmit(保存ボタン)が押されるとこのセクションの処理が行われる。
+            一番最初にスレッドが保存中の旨を伝えるモーダルが開く。
+            前回のモーダルから private_metadata を受け取る。
+            受け取った情報に self が含まれてる場合、ユーザー自身がタイトルを設定したタイトルを取得する。
+            保存する内容を表示するモーダルビューを作成し、起動する。
+            スレッドの保存し、ステータスを停止にする。
+            スレッドの要約を生成。
+            スレッドの要約のメッセージの block kit を作成し、スレッドに投稿する。
+    """
+    # タイトルの設定方法を選択
     @app.message_shortcut("save")
     def select_save_modal(ack, body, client):
         ack()
-        ch_id = body["channel"]["id"]
-        thread_ts = body["message"]["thread_ts"]
-        team_domain = body["team"]["domain"]
+        ch_id = body["channel"]["id"] # ch_id取得
+        thread_ts = body["message"]["thread_ts"] # thread_ts取得
+        team_domain = body["team"]["domain"] # team_domain取得
 
         with open("json/save_modal.json") as f:
-            modal_view = json.load(f)
+            modal_view = json.load(f) # jsonからmodal_view読込
 
-        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}"
+        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts}, _ {team_domain}" # private_metadataを追加
+
+        # モーダルを起動
         client.views_open(
             trigger_id=body["trigger_id"],
             view=modal_view["select"]
         )
 
-
+    # スレッドタイトル手動設定
     @app.action("self")
     def title_save_modal(ack, body, client, logger):
         ack()
-        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",")
+        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",") # private_metadata からchannel_id, thread_id, team_domainを取得
 
+        # json読込
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)["self"]
-        modal_view["private_metadata"] = f"{ch_id},{thread_ts},self,{team_domain}"
+
+        modal_view["private_metadata"] = f"{ch_id},{thread_ts},self,{team_domain}" # private_metadata追加
+
+        # スレッドタイトルを入力するモーダル起動
         client.views_update(
             view_id=body.get("view").get("id"),
             hash=body.get("view").get("hash"),
             view=modal_view
         )
 
+    # スレッドタイトル自動生成
     @app.action("generate")
     def generate_title_modal(ack, body, client):
         ack()
-        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",")
+        ch_id, thread_ts, _,  team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
+
+        # json読込
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)
-        modal_view["loading"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}"
 
-        # まず「処理中...」である旨を伝える
+        modal_view["loading"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}" # private_metadata追加
+
+        # 「生成中...」モーダル起動
         client.views_update(
             view_id=body.get("view").get("id"),
             hash=body.get("view").get("hash"),
             view=modal_view["loading"]
         )
 
-        title = get_thread_title(client, ch_id, thread_ts)
-        modal_view["generate"]["blocks"][1]["text"]["text"] = f"```{title}```"
-        modal_view["generate"]["private_metadata"] = f"{ch_id},{thread_ts},{title},{team_domain}"
+        title = get_thread_title(client, ch_id, thread_ts) # タイトル生成
+
+        modal_view["generate"]["blocks"][1]["text"]["text"] = f"```{title}```" # 生成したタイトルをビューに設定
+        modal_view["generate"]["private_metadata"] = f"{ch_id},{thread_ts},{title},{team_domain}" # private_metadata追加
+
+        # 「生成したタイトル」モーダル起動
         client.views_update(
             view_id=body.get("view").get("id"),
             view=modal_view["generate"]
         )
 
+    # スレッド保存
     @app.view("save_submit")
     def modal_submit(ack, body, client):
+
+        # json読込
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)
+
+        # 「保存中...」モーダル起動
         ack(
             response_action="update",
             view=modal_view["end_loading"]
         )
 
+        ch_id, thread_ts, title, team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
 
-
-        # フォーム（モーダル）で受け取った質問が入ってる変数
-        ch_id, thread_ts, title, team_domain = body["view"]["private_metadata"].split(",")
-        if title == "self":
-            title = body["view"]["state"]["values"]["title"]["title_input"]["value"]
+        if title == "self": # タイトルを手動設定した場合
+            title = body["view"]["state"]["values"]["title"]["title_input"]["value"] # 入力されたタイトル取得
 
         # スレッドのURLを作成
         url = f"https://{team_domain}.slack.com/archives/{ch_id}/p{thread_ts}"
 
-        date = datetime.now().date()
+        date = datetime.now().date() # 現在日取得
 
+        # 保存した内容を表示するモーダルビュー作成
         modal_view["end"]["blocks"][2]["elements"][0]["text"] = f"<{url}|{title}>"
         modal_view["end"]["blocks"][3]["fields"][0]["text"] += "スレッド"
         modal_view["end"]["blocks"][3]["fields"][1]["text"] += str(date)
 
-        upload(title, url, "スレッド")
-        active_end(url)
-
+        # 保存した内容を表示するモーダル起動
         client.views_update(
             view_id=body.get("view").get("id"),
             view=modal_view["end"]
         )
 
-        summary = get_thread_summary(client, ch_id, thread_ts)
-        summary, question, conclusion = summary.split("\n")
+        upload(title, url, "スレッド") # DBにアップロード
+        active_end(url) # スレッドの稼働状況を「停止」に上書き
+
+        summary = get_thread_summary(client, ch_id, thread_ts) # スレッド内の要約を生成
+        summary, question, conclusion = summary.split("\n") # 生成した内容を「要約」「質問」「結論」に分ける
+
+        # block_kitを作成
         modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = question[3:]
         modal_view["post_summary"]["blocks"][4]["elements"][0]["text"] = summary[3:]
         modal_view["post_summary"]["blocks"][7]["elements"][0]["text"] = conclusion[3:]
 
-
+        # スレッドに要約を投稿
         client.chat_postMessage(
             channel=ch_id,
             thread_ts=thread_ts,
@@ -455,7 +508,7 @@ def register_modal_handlers(app: App):
         modal_view["block"][1]["fields"][1]["text"] = f"*追加日:*\n{response[0][2]}"
         modal_view["modal"]["blocks"].extend(modal_view["block"])
 
-        client.views_open(
+        client.views_update(
             trigger_id=body["trigger_id"],
             view=modal_view["modal"]
         )
