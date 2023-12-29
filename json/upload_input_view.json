@@ -13,6 +13,7 @@
 		{
 			"dispatch_action": true,
 			"type": "input",
+			"block_id": "content-block",
 			"element": {
 				"type": "plain_text_input",
 				"dispatch_action_config": {

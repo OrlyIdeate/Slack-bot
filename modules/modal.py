@@ -289,6 +289,12 @@ def register_modal_handlers(app: App):
     @app.message_shortcut("upload_thread")
     def open_modal(ack, body, client):
         ack()
+        user_id = body["user"]["id"]
+        message_ts = body["message"]["ts"]
+
+        # スレッドのタイムスタンプを辞書に格納
+        # これでスレッドにアップロードをするかどうかを制御します。
+        upload_timestamp[user_id] = message_ts
         try:
             with open('json/upload_view.json', 'r') as file:
                 upload_view = json.load(file)
@@ -400,11 +406,12 @@ def register_modal_handlers(app: App):
                 ]
             }
         )
-        content = view["state"]["values"]["content-block"]["content_input"]["value"]
+        content = view["state"]["values"]["content-block"]["plain_text_input-action"]["value"]
         url = view["state"]["values"]["url-block"]["url_input"]["value"]
         # 選択されたカテゴリーまたは入力されたカテゴリーを取得
         try:
-            selected_category = view["state"]["values"]["radio_buttons"]
+            selected_option = view["state"]["values"]["category-select-block"]["category_select"].get("selected_option")
+            selected_category = selected_option["value"] if selected_option else None
         except KeyError:
             selected_category = None
 
