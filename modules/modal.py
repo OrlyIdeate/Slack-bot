@@ -400,7 +400,7 @@ def register_modal_handlers(app: App):
                         "type": "header",
                         "text": {
                             "type": "plain_text",
-                            "text": "読込中…"
+                            "text": "保存しました"
                         }
                     }
                 ]
