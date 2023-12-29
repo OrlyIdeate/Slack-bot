@@ -31,7 +31,7 @@ def message(app):
 
         if thread_count % 15 == 0:
             #これまでの会話ログとスレッドの最初の質問を取得
-            prev_message = client.conversations_replies(channel=message_channel, thread_ts=thread_ts)
+            prev_message = client.conversations_replies(channel=message_channel, ts=message_ts)
             ques = prev_message['messages'][0]['text']
             all_message= ""
             for i in range(len(prev_message['messages'])):
