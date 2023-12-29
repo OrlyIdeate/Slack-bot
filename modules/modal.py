@@ -519,7 +519,7 @@ def register_modal_handlers(app: App):
         date = datetime.now().date() # 現在日取得
 
         # 保存した内容を表示するモーダルビュー作成
-        modal_view["end"]["blocks"][2]["text"][0]["text"] = f"<{url}|{title}>"
+        modal_view["end"]["blocks"][2]["text"]["text"] = f"<{url}|{title}>"
         modal_view["end"]["blocks"][3]["fields"][0]["text"] += "スレッド"
         modal_view["end"]["blocks"][3]["fields"][1]["text"] += str(date)
 
