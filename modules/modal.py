@@ -386,7 +386,7 @@ def register_modal_handlers(app: App):
             print(f"Error updating modal: {e}")
 
     @app.view("uploading")
-    def uploading(ask, view, client, body):
+    def uploading(ack, view, client, body):
         ack(
             response_action="update",
             view={
