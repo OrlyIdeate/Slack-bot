@@ -265,24 +265,16 @@ def register_modal_handlers(app: App):
     @app.action("upload")
     def open_modal(ack, body, client):
         ack()
-        categories = get_unique_categories()  # データベースからカテゴリーを取得
-
-        category_options = [{
-            "text": {"type": "plain_text", "text": category},
-            "value": category
-        } for category in categories]
 
         try:
             with open('json/upload_view.json', 'r') as file:
                 upload_view = json.load(file)
 
-            # カテゴリーオプションを動的に追加
-            upload_view["blocks"][1]["accessory"]["options"] = category_options
-
             client.views_open(
                 trigger_id=body["trigger_id"],
                 view=upload_view
             )
+
         except SlackApiError as e:
             print(f"Error updating modal: {e}")
 
@@ -346,15 +338,79 @@ def register_modal_handlers(app: App):
 
     @app.view("modal-submit_up")  # モーダルのcallback_idに合わせて設定
     def handle_modal_submission(ack, body, client, view, logger):
-        ack()
+        ack(
+            response_action="update",
+            view={
+                "type": "modal",
+                "title": {
+                    "type": "plain_text",
+                    "text": "アップロード"
+                },
+                "blocks": [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "読込中…"
+                        }
+                    }
+                ]
+            }
+        )
 
         # モーダルからの入力値を取得
+        selected_option = view["state"]["values"]["radio_buttons"]["radio_buttons_action"]["selected_option"]["value"]
+
+        categories = get_unique_categories()
+        category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
+
+        if selected_option == 'choose_category':
+            # JSONファイルからモーダルの定義を読み込む
+            with open('json/upload_selection_view.json', 'r') as file:
+                modal_view_up = json.load(file)
+
+            # カテゴリーオプションを動的に追加
+            modal_view_up["blocks"][2]["element"]["options"] = category_options
+        else:
+            # JSONファイルからモーダルの定義を読み込む
+            with open('json/upload_input_view.json', 'r') as file:
+                modal_view_up = json.load(file)
+
+        try:
+            client.views_update(
+                trigger_id=body["trigger_id"],
+                view_id=body["view"]["id"],
+                view=modal_view_up
+            )
+        except SlackApiError as e:
+            print(f"Error updating modal: {e}")
+
+    @app.view("uploading")
+    def uploading(ask, view, client, body):
+        ack(
+            response_action="update",
+            view={
+                "type": "modal",
+                "title": {
+                    "type": "plain_text",
+                    "text": "アップロード"
+                },
+                "blocks": [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "読込中…"
+                        }
+                    }
+                ]
+            }
+        )
         content = view["state"]["values"]["content-block"]["content_input"]["value"]
         url = view["state"]["values"]["url-block"]["url_input"]["value"]
-
         # 選択されたカテゴリーまたは入力されたカテゴリーを取得
         try:
-            selected_category = view["state"]["values"]["category-select-block"]["category_select"]["selected_option"]["value"]
+            selected_category = view["state"]["values"]["radio_buttons"]
         except KeyError:
             selected_category = None
 
@@ -375,7 +431,7 @@ def register_modal_handlers(app: App):
 
         with open('json/response_message_block.json', 'r') as file:
             message_block = json.load(file)
-    
+
         # プレースホルダーを実際の値で置き換え
         for block in message_block["blocks"]:
             if block["type"] == "context":

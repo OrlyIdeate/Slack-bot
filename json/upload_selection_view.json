@@ -1,6 +1,6 @@
 {
     "type": "modal",
-    "callback_id": "modal-submit_up",
+    "callback_id": "uploading",
     "title": {
         "type": "plain_text",
         "text": "情報を入力"
