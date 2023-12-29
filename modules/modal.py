@@ -164,7 +164,7 @@ def register_modal_handlers(app: App):
             view=views["first_modal"]
         )
 
-        # del_message(body["channel"]["id"], body["message"]["ts"])
+        del_message(body["channel"]["id"], body["message"]["ts"])
 
     @app.action("category_select")
     def category_select(ack, body, client):
