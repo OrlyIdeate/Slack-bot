@@ -40,7 +40,14 @@ def get_thread_summary(client, channel_id, thread_ts):
     prev_message = client.conversations_replies(channel=channel_id, ts=thread_ts) # スレッドの情報を取得
     all_messages = " ".join(msg['text'] for msg in prev_message['messages']) # スレッド内の全会話を取得
 
-    summary_prompt = all_messages + "\nこの会話の内容をまとめた要約と一番最初の質問をまとめた質問と質問に対する最終的な回答である結論をそれぞれ100字以内にまとめて{要約}\n{質問}\n{回答}の形式で回答して" # 全会話を基に要約を求めるプロンプト作成
-    summary_text = chatgpt(summary_prompt) # GPTへ要約を問い合わせ
+    summary_prompt1 = all_messages + "\nこの会話の内容をまとめた要約を40字以内にまとめて回答してください。" 
+    summary_prompt2 = all_messages + "\nこの会話で一番最初に行われた質問を一番最初の質問を40字以内にまとめて回答してください。"
+    summary_prompt3 = all_messages + "\nこの会話における結論を40字以内にまとめて回答してください。"
 
-    return summary_text # 要約、質問、結論をカンマ区切りでまとめた文字列
+    summary_text1 = chatgpt(summary_prompt1)
+    summary_text2 = chatgpt(summary_prompt2)
+    summary_text3 = chatgpt(summary_prompt3)
+
+    return_text = {summary_text1, summary_text2, summary_text3}
+
+    return return_text

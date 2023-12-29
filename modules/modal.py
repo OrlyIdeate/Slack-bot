@@ -533,7 +533,9 @@ def register_modal_handlers(app: App):
         active_end(url) # スレッドの稼働状況を「停止」に上書き
 
         summary = get_thread_summary(client, ch_id, thread_ts) # スレッド内の要約を生成
-        summary, question, conclusion = summary.split("\n") # 生成した内容を「要約」「質問」「結論」に分ける
+        question = summary[1]
+        conclusion = summary[2]
+        summary=summary[0]
 
         # block_kitを作成
         modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = question[3:]
