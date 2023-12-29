@@ -538,9 +538,9 @@ def register_modal_handlers(app: App):
         summary=summary[0]
 
         # block_kitを作成
-        modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = question[3:]
-        modal_view["post_summary"]["blocks"][4]["elements"][0]["text"] = summary[3:]
-        modal_view["post_summary"]["blocks"][7]["elements"][0]["text"] = conclusion[3:]
+        modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = question
+        modal_view["post_summary"]["blocks"][4]["elements"][0]["text"] = summary
+        modal_view["post_summary"]["blocks"][7]["elements"][0]["text"] = conclusion
 
         # スレッドに要約を投稿
         client.chat_postMessage(
