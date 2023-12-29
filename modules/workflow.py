@@ -26,7 +26,7 @@ def workflow_step(app):
         with open("json/first_message.json") as f:
             client.chat_postMessage(
                 channel=step["inputs"]["channel"]["value"],
-                text="こんにちは！\nこちらの環境ではボタンを表示できないようです…\nショートカットまたは、アプリホームからSlackGPTをご利用ください<(_ _)>",
+                text="こんにちは！SlackGPTのフォーム起動するボタンを送信しました。",
                 blocks=json.load(f)["blocks"]
             )
         complete(outputs={})

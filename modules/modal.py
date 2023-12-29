@@ -69,6 +69,7 @@ def register_modal_handlers(app: App):
         client.chat_postMessage(
             channel=ch_id,
             thread_ts=thread_ts,
+            text=response_text,
             blocks=answer_view
         )
 
@@ -108,6 +109,7 @@ def register_modal_handlers(app: App):
         client.chat_postMessage(
             channel=ch_id,
             thread_ts=thread_ts,
+            text="類似一覧",
             blocks=similar_view
         )
 
@@ -287,25 +289,17 @@ def register_modal_handlers(app: App):
     @app.message_shortcut("upload_thread")
     def open_modal(ack, body, client):
         ack()
-        user_id = body["user"]["id"]
-        thread_ts = body["message"]["ts"]
-        upload_timestamp[user_id] = thread_ts
-        # データベースからカテゴリを取得し、オプションリストを作成
-        categories = get_unique_categories()
-        category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
-
         try:
-            # モーダルのJSON定義を読み込み
             with open('json/upload_view.json', 'r') as file:
                 upload_view = json.load(file)
 
-            # カテゴリオプションをモーダルに追加
-            upload_view["blocks"][1]["accessory"]["options"] = category_options
+            client.views_open(
+                trigger_id=body["trigger_id"],
+                view=upload_view
+            )
 
-            # モーダルを開く
-            client.views_open(trigger_id=body["trigger_id"], view=upload_view)
         except SlackApiError as e:
-            print(f"Error opening modal: {e}")
+            print(f"Error updating modal: {e}")
 
     @app.action("category_selection")
     def handle_selection(ack, body, client):
@@ -602,6 +596,7 @@ def register_modal_handlers(app: App):
         client.chat_postMessage(
             channel=ch_id,
             thread_ts=thread_ts,
+            text=f"{question}\n{summary}\n{conclusion}",
             blocks=modal_view["post_summary"]["blocks"]
         )
 
