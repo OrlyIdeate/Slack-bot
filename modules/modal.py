@@ -551,26 +551,28 @@ def register_modal_handlers(app: App):
     @app.action("active_thread")
     def thread_monitor_modal(ack, body, client):
         ack()
-        ch_id = body["channel"]["id"]
-        ts = body["message"]["ts"]
-        active_thread = get_thread_info()
+        active_threads = get_thread_info()
 
-        with open("json/active_thread_list.json") as f:
-            modal_view = json.load(f)
+        # JSONファイルを読み込む
+        with open("json/active_thread_list.json", "r") as file:
+            modal_view = json.load(file)
 
+        # 稼働中のスレッドの情報をブロックに追加
+        for title, url in active_threads:
+            thread_block = {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*<{url}|{title}>*"
+                }
+            }
+            modal_view["blocks"].append(thread_block)
+            modal_view["blocks"].append({"type": "divider"})
 
-
-
-        url = active_thread[0]
-        response = execute_query("SELECT content, category, date FROM phase4 WHERE url = %s;", url)
-        modal_view["block"][0]["text"]["text"] = f"*<{url}|{response[0][0]}>*"
-        modal_view["block"][1]["fields"][0]["text"] = f"*カテゴリ:*\n{response[0][1]}"
-        modal_view["block"][1]["fields"][1]["text"] = f"*追加日:*\n{response[0][2]}"
-        modal_view["modal"]["blocks"].extend(modal_view["block"])
-
+        # モーダルを表示
         client.views_update(
-            trigger_id=body["trigger_id"],
-            view=modal_view["modal"]
-        )
+                view_id=body.get("view").get("id"),
+                view=modal_view
+            )
 
-        del_message(ch_id, ts)
+        # del_message(ch_id, ts)

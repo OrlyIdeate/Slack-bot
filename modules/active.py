@@ -32,7 +32,7 @@ def get_thread_info():
     Returns:
         list: 稼働中のスレッドの title, url が格納されたリスト
     """
-    query = "SELECT url FROM active_monitoring WHERE status != '終了';"
+    query = "SELECT title, url FROM active_monitoring WHERE status != '終了';"
     result= execute_query(query)
     return result
 
