@@ -54,7 +54,7 @@ def register_modal_handlers(app: App):
         notion=client.chat_postMessage(
             channel=ch_id,
             thread_ts=thread_ts,
-            text="生成しています。少々お待ちください..."
+            text="生成しています。少々お待ちください...:now_loading:"
         )
 
         response_text = chatgpt(question)
