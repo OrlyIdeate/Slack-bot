@@ -24,8 +24,8 @@ def register_modal_handlers(app: App):
         ch_id = body["channel"]["id"]
         ts = body["message"]["ts"]
         team_domain = body["team"]["domain"]
-        # 'question_view.json' からモーダルの定義を読み込む
-        with open('json/question_view.json', 'r') as file:
+        # "question_view.json" からモーダルの定義を読み込む
+        with open("json/question_view.json", "r") as file:
             modal_view = json.load(file)
         modal_view["question"]["private_metadata"] = f"{ch_id},{team_domain}"
 
@@ -40,7 +40,7 @@ def register_modal_handlers(app: App):
     @app.view("question-submit")
     def response_gpt(ack, body, view, client):
 
-        with open('json/question_view.json', 'r') as file:
+        with open("json/question_view.json", "r") as file:
             modal_view = json.load(file)
 
         ch_id, team_domain = view["private_metadata"].split(",")
@@ -133,7 +133,7 @@ def register_modal_handlers(app: App):
     def open_search_modal(ack, body, client):
         ack()
         # JSONファイルからモーダルの定義を読み込む
-        with open('json/search_view.json', 'r') as file:
+        with open("json/search_view.json", "r") as file:
             search_view = json.load(file)
 
         client.views_open(
@@ -188,7 +188,7 @@ def register_modal_handlers(app: App):
         ])
 
         try:
-            with open('json/db_category_view.json', 'r') as file:
+            with open("json/db_category_view.json", "r") as file:
                 modal_view = json.load(file)
 
             # カテゴリのオプションを動的に追加
@@ -222,8 +222,8 @@ def register_modal_handlers(app: App):
         page_size = 5
         response_text = db_list(category, page_number, page_size)
 
-        # 'db_page_view.json' からモーダルの定義を読み込む
-        with open('json/db_page_view.json', 'r') as file:
+        # "db_page_view.json" からモーダルの定義を読み込む
+        with open("json/db_page_view.json", "r") as file:
             views = json.load(file)
 
         # 動的なコンテンツを更新
@@ -254,8 +254,8 @@ def register_modal_handlers(app: App):
 
         new_page_data = db_list(category, page_number, page_size)
 
-        # 'db_move_view.json' からモーダルの定義を読み込む
-        with open('json/db_move_view.json', 'r') as file:
+        # "db_move_view.json" からモーダルの定義を読み込む
+        with open("json/db_move_view.json", "r") as file:
             views = json.load(file)
 
         # 動的なコンテンツを更新
@@ -279,7 +279,7 @@ def register_modal_handlers(app: App):
         ack()
 
         try:
-            with open('json/upload_view.json', 'r') as file:
+            with open("json/upload_view.json", "r") as file:
                 upload_view = json.load(file)
 
             client.views_open(
@@ -306,7 +306,7 @@ def register_modal_handlers(app: App):
         # これでスレッドにアップロードをするかどうかを制御します。
         upload_timestamp[user_id] = message_ts
         try:
-            with open('json/upload_view.json', 'r') as file:
+            with open("json/upload_view.json", "r") as file:
                 upload_view = json.load(file)
 
             client.views_open(
@@ -321,19 +321,19 @@ def register_modal_handlers(app: App):
     def handle_selection(ack, body, client):
         ack()
         categories = get_unique_categories()
-        user_selection = body['actions'][0]['selected_option']['value']
+        user_selection = body["actions"][0]["selected_option"]["value"]
         category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
 
-        if user_selection == 'choose_category':
+        if user_selection == "choose_category":
             # JSONファイルからモーダルの定義を読み込む
-            with open('json/upload_selection_view.json', 'r') as file:
+            with open("json/upload_selection_view.json", "r") as file:
                 modal_view_up = json.load(file)
 
             # カテゴリーオプションを動的に追加
             modal_view_up["blocks"][2]["element"]["options"] = category_options
         else:
             # JSONファイルからモーダルの定義を読み込む
-            with open('json/upload_input_view.json', 'r') as file:
+            with open("json/upload_input_view.json", "r") as file:
                 modal_view_up = json.load(file)
 
         try:
@@ -374,16 +374,16 @@ def register_modal_handlers(app: App):
         categories = get_unique_categories()
         category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
 
-        if selected_option == 'choose_category':
+        if selected_option == "choose_category":
             # JSONファイルからモーダルの定義を読み込む
-            with open('json/upload_selection_view.json', 'r') as file:
+            with open("json/upload_selection_view.json", "r") as file:
                 modal_view_up = json.load(file)
 
             # カテゴリーオプションを動的に追加
             modal_view_up["blocks"][2]["element"]["options"] = category_options
         else:
             # JSONファイルからモーダルの定義を読み込む
-            with open('json/upload_input_view.json', 'r') as file:
+            with open("json/upload_input_view.json", "r") as file:
                 modal_view_up = json.load(file)
 
         try:
@@ -440,7 +440,7 @@ def register_modal_handlers(app: App):
         response_message = f"保存された内容は以下です:\n内容: <{url}|{content}>\nカテゴリ: {category}"
         client.chat_postMessage(channel=body["user"]["id"], text = response_message)
 
-        with open('json/response_message_block.json', 'r') as file:
+        with open("json/response_message_block.json", "r") as file:
             message_block = json.load(file)
 
         # プレースホルダーを実際の値で置き換え
@@ -461,38 +461,13 @@ def register_modal_handlers(app: App):
             del upload_timestamp[user_id]
 
 
-    """
-    スレッドをDBに保存するためのモーダルの処理
 
-        1. @app.message_shortcut("save)
-            ここで一番最初に起動するタイトルの設定方法（手動設定 or 自動生成）を選ぶモーダルを起動。
-            channel_id, thread_ts, team_domainを取得し、モーダルビューのprivate_metadataに渡し、データを保持。（"_"が無いとタイトルの再生生成時にエラーになる）
-            private_metadataを含んだモーダルビューを表示させ、ユーザーにスレッドのタイトルの設定方法を選ばせる。
 
-        2. @app.action("self")
-            ここではユーザーが手動でスレッドタイトルを入力し設定するモーダルを表示する。
-            前回のモーダルビューの private_metadata からchannel_id, thread_id, team_domainを取得。
-            private_metadataにユーザがタイトルを付けたことを示す、selfを追加した channel_id, thread_ts, self, team_domainを渡し、データを保持。
 
-        3. @app.action("generate")
-            ここではスレッドタイトルを自動生成するモーダルを起動する。
-            前回のモーダルビューの private_metadata から ch_id, thread_ts, team_domain を取得。
-            生成中を伝えるモーダルビューに private_metadata を渡し、モーダルを開く。
-            GPT-4に問い合わせてタイトルを生成する。
-            生成したタイトルを表示するモーダルビューに生成したタイトルと private_metadata を追加する。
-            生成したタイトルを表示するモーダルを表示する。
-            (このモーダルには再生成ボタンがあり、ユーザーがそれを押すとこのセクションの処理を繰り返す。)
 
-        4. @app.view("save_submit")
-            2か3でsubmit(保存ボタン)が押されるとこのセクションの処理が行われる。
-            一番最初にスレッドが保存中の旨を伝えるモーダルが開く。
-            前回のモーダルから private_metadata を受け取る。
-            受け取った情報に self が含まれてる場合、ユーザー自身がタイトルを設定したタイトルを取得する。
-            保存する内容を表示するモーダルビューを作成し、起動する。
-            スレッドの保存し、ステータスを停止にする。
-            スレッドの要約を生成。
-            スレッドの要約のメッセージの block kit を作成し、スレッドに投稿する。
-    """
+
+
+
     # タイトルの設定方法を選択
     @app.message_shortcut("save")
     def select_save_modal(ack, body, client):
@@ -504,44 +479,25 @@ def register_modal_handlers(app: App):
         with open("json/save_modal.json") as f:
             modal_view = json.load(f) # jsonからmodal_view読込
 
-        modal_view["select"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}" # private_metadataを追加
+        modal_view["first"]["private_metadata"] = f"{ch_id},{thread_ts},{team_domain}" # private_metadataを追加
 
         # モーダルを起動
         client.views_open(
             trigger_id=body["trigger_id"],
-            view=modal_view["select"]
-        )
-
-    # スレッドタイトル手動設定
-    @app.action("self")
-    def title_save_modal(ack, body, client, logger):
-        ack()
-        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",") # private_metadata からchannel_id, thread_id, team_domainを取得
-
-        # json読込
-        with open("json/save_modal.json") as f:
-            modal_view = json.load(f)["self"]
-
-        modal_view["private_metadata"] = f"{ch_id},{thread_ts},self,{team_domain}" # private_metadata追加
-
-        # スレッドタイトルを入力するモーダル起動
-        client.views_update(
-            view_id=body.get("view").get("id"),
-            hash=body.get("view").get("hash"),
-            view=modal_view
+            view=modal_view["first"]
         )
 
     # スレッドタイトル自動生成
     @app.action("generate")
     def generate_title_modal(ack, body, client):
         ack()
-        ch_id, thread_ts, _, team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
+        ch_id, thread_ts, team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
 
         # json読込
         with open("json/save_modal.json") as f:
             modal_view = json.load(f)
 
-        modal_view["loading"]["private_metadata"] = f"{ch_id},{thread_ts},_,{team_domain}" # private_metadata追加
+        modal_view["loading"]["private_metadata"] = f"{ch_id},{thread_ts},{team_domain}" # private_metadata追加
 
         # 「生成中...」モーダル起動
         client.views_update(
@@ -552,8 +508,8 @@ def register_modal_handlers(app: App):
 
         title = get_thread_title(client, ch_id, thread_ts) # タイトル生成
 
-        modal_view["generate"]["blocks"][1]["text"]["text"] = f"```{title}```" # 生成したタイトルをビューに設定
-        modal_view["generate"]["private_metadata"] = f"{ch_id},{thread_ts},{title},{team_domain}" # private_metadata追加
+        modal_view["generate"]["blocks"][0]["element"]["initial_value"] = f"{title}" # 生成したタイトルをビューに設定
+        modal_view["generate"]["private_metadata"] = f"{ch_id},{thread_ts},{team_domain}" # private_metadata追加
 
         # 「生成したタイトル」モーダル起動
         client.views_update(
@@ -575,10 +531,9 @@ def register_modal_handlers(app: App):
             view=modal_view["end_loading"]
         )
 
-        ch_id, thread_ts, title, team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
+        ch_id, thread_ts, team_domain = body["view"]["private_metadata"].split(",") # private_metadata取得
 
-        if title == "self": # タイトルを手動設定した場合
-            title = body["view"]["state"]["values"]["title"]["title_input"]["value"] # 入力されたタイトル取得
+        title = body["view"]["state"]["values"]["title_input"]["title"]["value"] # 入力されたタイトル取得
 
         # スレッドのURLを作成
         url = f"https://{team_domain}.slack.com/archives/{ch_id}/p{thread_ts}"
@@ -644,5 +599,3 @@ def register_modal_handlers(app: App):
                 view_id=body.get("view").get("id"),
                 view=modal_view
             )
-
-        # del_message(ch_id, ts)

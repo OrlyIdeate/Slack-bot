@@ -1,9 +1,15 @@
 {
-	"select":{
+	"first":{
 		"type": "modal",
+		"callback_id": "save_submit",
 		"title": {
 			"type": "plain_text",
 			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"submit": {
+			"type": "plain_text",
+			"text": "保存",
 			"emoji": true
 		},
 		"close": {
@@ -11,41 +17,51 @@
 			"text": "キャンセル",
 			"emoji": true
 		},
-		"private_metadata": "",
 		"blocks": [
 			{
 				"type": "section",
 				"text": {
 					"type": "mrkdwn",
-					"text": "*スレッドのタイトルを設定します。*\n*設定方法を選んでください。*"
+					"text": " "
 				}
 			},
 			{
-				"type": "actions",
-				"elements": [
-					{
-						"type": "button",
-						"text": {
-							"type": "plain_text",
-							"text": "自分でタイトルをつける",
-							"emoji": true
-						},
-						"action_id": "self"
-					},
-					{
-						"type": "button",
-						"text": {
-							"type": "plain_text",
-							"text": "自動生成でタイトルをつける",
-							"emoji": true
-						},
-						"action_id": "generate"
+				"type": "input",
+				"block_id": "title_input",
+				"element": {
+					"type": "plain_text_input",
+					"action_id": "title",
+					"placeholder": {
+						"type": "plain_text",
+						"text": "スレッドの内容が推測しやすいタイトルを入力してください"
 					}
-				]
+				},
+				"label": {
+					"type": "plain_text",
+					"text": "タイトル",
+					"emoji": true
+				}
+			},
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": " "
+				},
+				"accessory": {
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "自動生成",
+						"emoji": true
+					},
+					"value": "generate",
+					"action_id": "generate"
+				}
 			}
 		]
 	},
-	"self":{
+	"generate":{
 		"type": "modal",
 		"callback_id": "save_submit",
 		"title": {
@@ -66,56 +82,16 @@
 		"blocks": [
 			{
 				"type": "input",
-				"block_id": "title",
+				"block_id": "title_input",
 				"element": {
 					"type": "plain_text_input",
-					"placeholder": {
-						"type": "plain_text",
-						"text": "スレッドの内容が推測しやすいタイトルを入力してください"
-					},
-					"multiline": true,
-					"action_id": "title_input"
+					"action_id": "title",
+					"initial_value": " "
 				},
 				"label": {
 					"type": "plain_text",
-					"text": "スレッドのタイトル",
+					"text": "タイトル",
 					"emoji": true
-				}
-			}
-		]
-	},
-	"generate":{
-		"type": "modal",
-		"callback_id": "save_submit",
-		"title": {
-			"type": "plain_text",
-			"text": "スレッドを保存",
-			"emoji": true
-		},
-		"submit": {
-			"type": "plain_text",
-			"text": "保存する",
-			"emoji": true
-		},
-		"close": {
-			"type": "plain_text",
-			"text": "キャンセル",
-			"emoji": true
-		},
-		"blocks": [
-			{
-				"type": "header",
-				"text": {
-					"type": "plain_text",
-					"text": "生成したタイトル",
-					"emoji": true
-				}
-			},
-			{
-				"type": "section",
-				"text": {
-					"type": "mrkdwn",
-					"text": "```title```"
 				}
 			},
 			{
@@ -131,7 +107,6 @@
 						"text": "再生成",
 						"emoji": true
 					},
-					"value": "regenerate",
 					"action_id": "generate"
 				}
 			}
