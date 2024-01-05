@@ -8,7 +8,7 @@ load_dotenv()
 
 from slack_sdk.errors import SlackApiError
 from modules.active import get_thread_info
-from modules.chatgpt import chatgpt
+from modules.chatgpt import chatgpt, stream_chat
 from modules.DB import execute_query
 from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
@@ -27,49 +27,84 @@ def register_modal_handlers(app: App):
         # 'question_view.json' からモーダルの定義を読み込む
         with open('json/question_view.json', 'r') as file:
             modal_view = json.load(file)
-        modal_view["private_metadata"] = f"{ch_id},{team_domain}"
+        modal_view["question"]["private_metadata"] = f"{ch_id},{team_domain}"
 
         client.views_open(
             trigger_id=body["trigger_id"],
-            view=modal_view
+            view=modal_view["question"]
         )
         # del_message関数の実装内容に基づいて適宜修正
         del_message(ch_id, ts)
 
-    @app.view("modal-submit")
-    def modal_submit(ack, body, view, client):
-        ack()
+
+    @app.view("question-submit")
+    def response_gpt(ack, body, view, client):
+
+        with open('json/question_view.json', 'r') as file:
+            modal_view = json.load(file)
+
         ch_id, team_domain = view["private_metadata"].split(",")
-        # フォーム（モーダル）で受け取った質問が入ってる変数
         question = body["view"]["state"]["values"]["question-block"]["input_field"]["value"]
+        # modal_view["answer"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
+
+        ack(
+            response_action="update",
+            view=modal_view["loading"]
+        )
+
+        ch_id, team_domain = view["private_metadata"].split(",")
+
+        modal_view["answer"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
+        modal_view["answer"]["blocks"][0]["text"]["text"] = " "
+
+        # ストリーミング形式
+        # for response_gpt in stream_chat(question):
+        #     modal_view["answer"]["blocks"][0]["text"]["text"] += response_gpt
+        #     client.views_update(
+        #         view_id=body.get("view").get("id"),
+        #         view=modal_view["answer"]
+        #     )
+
+        # サイレント形式
+        modal_view["answer"]["blocks"][0]["text"]["text"] = chatgpt(question)
+        client.views_update(
+            view_id=body.get("view").get("id"),
+            view=modal_view["answer"]
+        )
+
+
+
+    @app.view_submission("answer-submit")
+    def answer_submit(ack, body, view, client):
+        ack()
+        ch_id, team_domain, question = view["private_metadata"].split(",")
+        # フォーム（モーダル）で受け取った質問が入ってる変数
+        answer = body["view"]["blocks"][0]["text"]["text"]
         # 入力されたデータをチャンネルに送信する
 
         thread = client.chat_postMessage(
             channel=ch_id,
-            text=f"受け取った質問: {question}"
+            text=f"{question}"
         )
 
         thread_ts=thread["ts"]
 
-        notion=client.chat_postMessage(
-            channel=ch_id,
-            thread_ts=thread_ts,
-            text="生成しています。少々お待ちください..."
-        )
-
-        response_text = chatgpt(question)
-
-        del_message(ch_id, notion["ts"])
+        # notion=client.chat_postMessage(
+        #     channel=ch_id,
+        #     thread_ts=thread_ts,
+        #     text="生成しています。少々お待ちください..."
+        # )
+        # del_message(ch_id, notion["ts"])
 
         with open("json/response_question.json") as f:
             answer_view = json.load(f)["blocks"]
 
-        answer_view[0]["text"]["text"] = response_text
+        answer_view[0]["text"]["text"] = answer
 
         client.chat_postMessage(
             channel=ch_id,
             thread_ts=thread_ts,
-            text=response_text,
+            text=answer,
             blocks=answer_view
         )
 
@@ -84,7 +119,7 @@ def register_modal_handlers(app: App):
             client.chat_postMessage(
                 channel=ch_id,
                 thread_ts=thread_ts,
-                text="類似一覧",
+                text="類似コンテンツ",
                 blocks=similar_view
             )
 

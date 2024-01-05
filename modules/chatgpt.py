@@ -59,3 +59,17 @@ def chatgpt(message):
     response = chat_completion.choices[0].message.content
 
     return response
+
+
+
+def stream_chat(question):
+    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+    chat_completion = openai_client.chat.completions.create(
+        messages=[{"role": "user", "content": question}],
+        model="gpt-3.5-turbo",
+        stream=True
+    )
+
+    for chunk in chat_completion:
+        yield chunk.choices[0].delta.content
