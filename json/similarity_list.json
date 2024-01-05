@@ -1,12 +1,26 @@
 {
 	"blocks": [
 		{
-			"type": "header",
+			"type": "section",
 			"text": {
-				"type": "plain_text",
-				"text": "類似度の高いコンテンツ",
-				"emoji": true
+				"type": "mrkdwn",
+				"text": "*<https://google.com|タイトル>*"
 			}
+		},
+		{
+			"type": "context",
+			"elements": [
+				{
+					"type": "plain_text",
+					"text": ":hash: カテゴリー",
+					"emoji": true
+				},
+				{
+					"type": "plain_text",
+					"text": ":calendar: 2024-1-4",
+					"emoji": true
+				}
+			]
 		}
 	]
 }

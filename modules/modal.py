@@ -64,7 +64,7 @@ def register_modal_handlers(app: App):
         with open("json/response_question.json") as f:
             answer_view = json.load(f)["blocks"]
 
-        answer_view[2]["elements"][0]["text"] = response_text
+        answer_view[0]["text"]["text"] = response_text
 
         client.chat_postMessage(
             channel=ch_id,
@@ -77,41 +77,16 @@ def register_modal_handlers(app: App):
             similar_view = json.load(f)["blocks"]
         similar = get_top_5_similar_texts(question)
         for _, content, url, date, category in similar:
-            similar_view.append({"type": "divider"})
-            similar_view.append(
-                {
-                    "type": "context",
-                    "elements": [
-                        {
-                            "type": "mrkdwn",
-                            "text": f"*<{url}|{content}>*"
-                        }
-                    ]
-                }
-            )
-            similar_view.append(
-                {
-                    "type": "section",
-                    "fields": [
-                        {
-                            "type": "mrkdwn",
-                            "text": f"*カテゴリ:*  {category}"
-                        },
-                        {
-                            "type": "mrkdwn",
-                            "text": f"*追加日:*  {date}"
-                        }
-                    ]
-                }
-            )
+            similar_view[0]["text"]["text"] = f"*<{url}|{content}>*"
+            similar_view[1]["elements"][0]["text"] = f":hash:{category}"
+            similar_view[1]["elements"][1]["text"] = f":calendar:{date}"
 
-
-        client.chat_postMessage(
-            channel=ch_id,
-            thread_ts=thread_ts,
-            text="類似一覧",
-            blocks=similar_view
-        )
+            client.chat_postMessage(
+                channel=ch_id,
+                thread_ts=thread_ts,
+                text="類似一覧",
+                blocks=similar_view
+            )
 
         summary_prompt = question + "\n\nこの内容をタイトル風にして。"
         url = f"https://{team_domain}.slack.com/archives/{ch_id}/p{thread_ts}" # スレッドのURLを作成
