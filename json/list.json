@@ -67,22 +67,27 @@
 		}
 	},
     "loading_modal":{
-        "type": "modal",
-        "title": {
-            "type": "plain_text",
-            "text": "一覧表示",
-            "emoji": true
-        },
-        "blocks": [
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": "検索中…"
-                }
-            }
-        ]
-    },
+		"type": "modal",
+		"title": {
+			"type": "plain_text",
+			"text": "一覧表示",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "*チャッピーくんがコンテンツを探しています...*"
+				},
+				"accessory": {
+					"type": "image",
+					"image_url": "https://i.pinimg.com/originals/94/7b/5c/947b5cdcb3f83afefa095b5cb8bc846d.gif",
+					"alt_text": "flying blue bird"
+				}
+			}
+		]
+	},
     "data_block":[
 		{
 			"type": "section",

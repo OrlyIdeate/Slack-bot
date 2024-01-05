@@ -43,7 +43,7 @@
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "*GPT-4からの回答を待っています…*"
+                    "text": "*チャッピーくんがGPT-4に回答を依頼中…*"
                 },
                 "accessory": {
                     "type": "image",

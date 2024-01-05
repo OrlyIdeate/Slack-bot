@@ -139,27 +139,44 @@
 	},
 	"loading":{
 		"type": "modal",
-		"callback_id": "generate",
-		"title": {"type": "plain_text", "text": "スレッドを保存"},
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
 		"blocks": [
 			{
-				"type": "header",
+				"type": "section",
 				"text": {
-					"type": "plain_text",
-					"text": "タイトルを生成中..."
+					"type": "mrkdwn",
+					"text": "*チャッピーくんがGPT-4にタイトル生成を依頼中...*"
+				},
+				"accessory": {
+					"type": "image",
+					"image_url": "https://i.pinimg.com/originals/94/7b/5c/947b5cdcb3f83afefa095b5cb8bc846d.gif",
+					"alt_text": "flying blue bird"
 				}
 			}
 		]
 	},
 	"end_loading":{
 		"type": "modal",
-		"title": {"type": "plain_text", "text": "スレッドを保存"},
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
 		"blocks": [
 			{
-				"type": "header",
+				"type": "section",
 				"text": {
-					"type": "plain_text",
-					"text": "保存中..."
+					"type": "mrkdwn",
+					"text": "*チャッピーくんがスレッドを保存しに行ってます...*"
+				},
+				"accessory": {
+					"type": "image",
+					"image_url": "https://i.pinimg.com/originals/94/7b/5c/947b5cdcb3f83afefa095b5cb8bc846d.gif",
+					"alt_text": "flying blue bird"
 				}
 			}
 		]
