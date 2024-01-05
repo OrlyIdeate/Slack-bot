@@ -15,7 +15,7 @@
             "block_id": "content-block",
             "element": {
                 "type": "plain_text_input",
-                "action_id": "content_input",
+                "action_id": "plain_text_input-action",
                 "multiline": true
             },
             "label": {
