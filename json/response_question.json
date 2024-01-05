@@ -1,24 +1,11 @@
 {
 	"blocks": [
 		{
-			"type": "header",
+			"type": "section",
 			"text": {
-				"type": "plain_text",
-				"text": "質問への回答",
-				"emoji": true
+				"type": "mrkdwn",
+				"text": "Chat-GPTの回答"
 			}
-		},
-		{
-			"type": "divider"
-		},
-		{
-			"type": "context",
-			"elements": [
-				{
-					"type": "mrkdwn",
-					"text": "here is answer text for chatgpt"
-				}
-			]
 		}
 	]
 }
