@@ -24,7 +24,7 @@
 			},
 			"label": {
 				"type": "plain_text",
-				"text": "内容を入力してください",
+				"text": "タイトルを入力してください",
 				"emoji": true
 			}
 		},
