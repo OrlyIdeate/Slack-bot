@@ -1,7 +1,6 @@
-import json
+import json, copy, random
 from slack_bolt import App
 from datetime import datetime
-import random
 
 # .env読み込み
 from dotenv import load_dotenv
@@ -196,15 +195,27 @@ def register_modal_handlers(app: App):
         ack()
         search_query = view["state"]["values"]["search_query"]["input"]["value"]
         top_5_similar_texts = get_top_5_similar_texts(search_query)
+
+        with open("json/similarity_list.json") as f:
+            similar_view = json.load(f)["blocks"]
+        similar_view.append({"type": "divider"})
         # 結果を表示
         response_text = "*検索結果*:\n\n"
-        for similarity, content, url, date, category in top_5_similar_texts:
-            response_text += f"*内容:* <{url}|{content}>\n"
-            response_text += f"*日付:* {date}\n"
-            response_text += f"*カテゴリ:* {category}\n\n"
+        response_block = []
+
+        for _, content, url, date, category in top_5_similar_texts:
+            similar_view = copy.deepcopy(similar_view)
+            response_text += f"*<{url}|{content}>*\n"
+            response_text += f":hash: {category} :calendar: {date}\n\n"
+            similar_view[0]["text"]["text"] = f"*<{url}|{content}>*"
+            similar_view[1]["elements"][0]["text"] = f":hash:{category}"
+            similar_view[1]["elements"][1]["text"] = f":calendar:{date}"
+            response_block.extend(similar_view)
+
         client.chat_postMessage(
             channel=body["user"]["id"],
-            text=response_text
+            text=response_text,
+            blocks=response_block
         )
 
 
