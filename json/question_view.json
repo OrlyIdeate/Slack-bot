@@ -80,5 +80,40 @@
                 }
             }
         ]
+    },
+    "false":{
+        "type": "modal",
+        "title": {
+            "type": "plain_text",
+            "text": "回答"
+        },
+        "close": {
+            "type": "plain_text",
+            "text": "閉じる"
+        },
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "質問がベストプラクティスに基づいていません。"
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": " "
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "質問を修正"
+                    },
+                    "action_id": "question"
+                }
+            }
+        ]
     }
 }

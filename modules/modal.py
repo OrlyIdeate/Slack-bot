@@ -9,7 +9,7 @@ load_dotenv()
 
 from slack_sdk.errors import SlackApiError
 from modules.active import get_thread_info
-from modules.chatgpt import chatgpt, stream_chat
+from modules.chatgpt import chatgpt, stream_chat, censor_gpt
 from modules.DB import execute_query
 from modules.similarity import get_top_5_similar_texts
 from modules.show import db_list
@@ -22,21 +22,37 @@ def register_modal_handlers(app: App):
     @app.action("question")
     def open_modal(ack, body, client):
         ack()
-        ch_id = body["channel"]["id"]
-        ts = body["message"]["ts"]
-        team_domain = body["team"]["domain"]
-        ran = random.randrange(7)# 乱数取得
+
         # "question_view.json" からモーダルの定義を読み込む
         with open("json/question_view.json", "r") as file:
-            modal_view = json.load(file)
-        modal_view["question"]["private_metadata"] = f"{ch_id},{team_domain}"
+            modal_view = json.load(file)["question"]
 
-        client.views_open(
-            trigger_id=body["trigger_id"],
-            view=modal_view["question"]
-        )
-        # del_message関数の実装内容に基づいて適宜修正
-        del_message(ch_id, ts)
+        try:
+            ch_id, team_domain, question = body["view"]["private_metadata"].split(",")
+            modal_view["blocks"][0]["element"]["initial_value"] = question
+
+            client.views_update(
+                view_id=body.get("view").get("id"),
+                view=modal_view
+            )
+
+        except KeyError:
+            ch_id = body["channel"]["id"]
+            ts = body["message"]["ts"]
+            team_domain = body["team"]["domain"]
+
+            # del_message関数の実装内容に基づいて適宜修正
+            del_message(ch_id, ts)
+
+            ran = random.randrange(7)# 乱数取得
+
+            modal_view["private_metadata"] = f"{ch_id},{team_domain}"
+
+            client.views_open(
+                trigger_id=body["trigger_id"],
+                view=modal_view
+            )
+
 
 
     @app.view("question-submit")
@@ -47,11 +63,9 @@ def register_modal_handlers(app: App):
 
         ch_id, team_domain = view["private_metadata"].split(",")
         question = body["view"]["state"]["values"]["question-block"]["input_field"]["value"]
-        # modal_view["answer"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
         temp=modal_view["loading"]
         temp['blocks'][0]['text']['text'] += "\n\n *=tips=*\n\n"
-        #ran=random.randrange(7)
-        ran=1
+        ran=random.randrange(7)
         if ran==0:
             temp['blocks'][0]['text']['text'] += "質の高い回答を得るためには、希望のコンテキスト、結果、長さ、形式、スタイルなどを*具体的*かつできるだけ*詳細*にプロンプトに含めることが大切です。いつ・どこで・誰が・何を・どれくらいなどの具体的な情報があることで、より精度の高い回答結果が得られます。"
         if ran==1:
@@ -73,8 +87,6 @@ def register_modal_handlers(app: App):
 
         ch_id, team_domain = view["private_metadata"].split(",")
 
-        modal_view["answer"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
-        modal_view["answer"]["blocks"][0]["text"]["text"] = " "
 
         # ストリーミング形式
         # for response_gpt in stream_chat(question):
@@ -85,11 +97,21 @@ def register_modal_handlers(app: App):
         #     )
 
         # サイレント形式
-        modal_view["answer"]["blocks"][0]["text"]["text"] = chatgpt(question)
-        client.views_update(
-            view_id=body.get("view").get("id"),
-            view=modal_view["answer"]
-        )
+        answer = censor_gpt(question)
+        if "質問がベストプラクティスに基づいていません。" in answer:
+            modal_view["false"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
+            modal_view["false"]["blocks"][0]["text"]["text"] = answer
+            client.views_update(
+                view_id=body.get("view").get("id"),
+                view=modal_view["false"]
+            )
+        else:
+            modal_view["answer"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
+            modal_view["answer"]["blocks"][0]["text"]["text"] = answer
+            client.views_update(
+                view_id=body.get("view").get("id"),
+                view=modal_view["answer"]
+            )
 
 
 
