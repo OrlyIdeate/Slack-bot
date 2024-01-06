@@ -40,7 +40,6 @@ def get_thread_summary(client, channel_id, thread_ts):
     prev_message = client.conversations_replies(channel=channel_id, ts=thread_ts) # スレッドの情報を取得
     all_messages = " ".join(msg["text"] for msg in prev_message["messages"]) # スレッド内の全会話を取得
 
-    summary_prompt = "以下の会話の内容をまとめた「要約」、一番最初の質問をまとめた「質問」、最終的な結論「結論」をそれぞれ100字以内で出力してください。\n" + f"会話：\n{all_messages}\n" + '{"question": "{質問}", "summary": "{要約}", "conclusion": "{回答}"}\n上記の形式のjsonのみ出力してください。'
+    summary_prompt = "以下の会話の内容をまとめた「要約」、一番最初の質問をまとめた「質問」、最終的な結論「結論」をそれぞれ100字以内で出力してください。\n" + '上記の形式のjsonのみ出力してください。\n{"question": "{質問}", "summary": "{要約}", "conclusion": "{回答}"}\n' + f"会話：\n{all_messages}"
     summary_text = chatgpt(summary_prompt)
-    # print("スレッド要約依頼の結果:", summary_text)
     return summary_text

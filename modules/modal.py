@@ -1,4 +1,4 @@
-import json, copy, random
+import json, copy, random, re
 from slack_bolt import App
 from datetime import datetime
 
@@ -169,7 +169,7 @@ def register_modal_handlers(app: App):
                 blocks=similar_view
             )
 
-        summary_prompt = question + "\n\nこの内容をタイトル風にして。"
+        summary_prompt = "以下の質問に30字以内でタイトルを付けてください。\n" + question
         url = f"https://{team_domain}.slack.com/archives/{ch_id}/p{thread_ts}" # スレッドのURLを作成
         active_start(thread_ts , summary_prompt, url, "稼働中")
 
@@ -609,10 +609,13 @@ def register_modal_handlers(app: App):
             view=modal_view["end"]
         )
 
-        upload(title, url, "スレッド") # DBにアップロード
-        active_end(url) # スレッドの稼働状況を「停止」に上書き
+        # upload(title, url, "スレッド") # DBにアップロード
+        # active_end(url) # スレッドの稼働状況を「停止」に上書き
 
-        summary = json.loads(get_thread_summary(client, ch_id, thread_ts)) # スレッド内の要約を生成
+        # スレッド内の要約を生成
+        pattern = re.compile(r'\{[^{}]*\}')
+        matches = pattern.findall(get_thread_summary(client, ch_id, thread_ts))
+        summary = json.loads(matches[0])
 
         # block_kitを作成
         modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = summary["question"]

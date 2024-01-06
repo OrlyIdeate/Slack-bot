@@ -119,7 +119,7 @@ def chatgpt(message):
 
     chat_completion = openai_client.chat.completions.create(
         messages=[
-            {"role": "system", "content": "回答は常にSlackのBlock Kitで使用できるマークダウン形式で出力してください"},
+            {"role": "system", "content": "回答にマークダウン形式を含む場合はSlackで使用可能なマークダウンで出力してください"},
             {"role": "user", "content": message}
         ],
         model="gpt-4"
