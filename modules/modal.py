@@ -28,8 +28,11 @@ def register_modal_handlers(app: App):
             modal_view = json.load(file)["question"]
 
         try:
-            ch_id, team_domain, question = body["view"]["private_metadata"].split(",")
-            modal_view["blocks"][0]["element"]["initial_value"] = question
+            metadata = json.loads(body["view"]["private_metadata"])
+            ch_id = metadata["ch_id"]
+            team_domain = metadata["team_domain"]
+            modal_view["blocks"][0]["element"]["initial_value"] = metadata["question"]
+            modal_view["private_metadata"] = f"{ch_id},{team_domain}"
 
             client.views_update(
                 view_id=body.get("view").get("id"),
@@ -85,8 +88,6 @@ def register_modal_handlers(app: App):
             view=temp
         )
 
-        ch_id, team_domain = view["private_metadata"].split(",")
-
 
         # ストリーミング形式
         # for response_gpt in stream_chat(question):
@@ -99,14 +100,14 @@ def register_modal_handlers(app: App):
         # サイレント形式
         answer = censor_gpt(question)
         if "質問がベストプラクティスに基づいていません。" in answer:
-            modal_view["false"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
+            modal_view["false"]["private_metadata"] = f'{{"ch_id": "{ch_id}", "team_domain": "{team_domain}", "question": "{question}"}}'
             modal_view["false"]["blocks"][0]["text"]["text"] = answer
             client.views_update(
                 view_id=body.get("view").get("id"),
                 view=modal_view["false"]
             )
         else:
-            modal_view["answer"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
+            modal_view["answer"]["private_metadata"] = f'{{"ch_id": "{ch_id}", "team_domain": "{team_domain}", "question": "{question}"}}'
             modal_view["answer"]["blocks"][0]["text"]["text"] = answer
             client.views_update(
                 view_id=body.get("view").get("id"),
@@ -118,7 +119,12 @@ def register_modal_handlers(app: App):
     @app.view_submission("answer-submit")
     def answer_submit(ack, body, view, client):
         ack()
-        ch_id, team_domain, question = view["private_metadata"].split(",")
+
+        metadata = json.loads(view["private_metadata"])
+        ch_id = metadata["ch_id"]
+        team_domain = metadata["team_domain"]
+        question = metadata["question"]
+
         # フォーム（モーダル）で受け取った質問が入ってる変数
         answer = body["view"]["blocks"][0]["text"]["text"]
         # 入力されたデータをチャンネルに送信する
