@@ -1,0 +1,14 @@
+{
+	"type": "modal",
+	"title": {
+		"type": "plain_text",
+		"text": "稼働中のスレッド一覧",
+		"emoji": true
+	},
+	"close": {
+		"type": "plain_text",
+		"text": "閉じる",
+		"emoji": true
+	},
+	"blocks": []
+}

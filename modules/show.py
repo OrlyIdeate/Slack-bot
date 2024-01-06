@@ -5,7 +5,7 @@ import os
 from slack_bolt import App
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-import mysql.connector
+from modules.DB import connect_to_db
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -13,32 +13,36 @@ load_dotenv()
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
 
-def db_list():
-
-    """DBから全情報を取得します。
-    """
-
-    config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-        }
-    db_connection = mysql.connector.connect(**config)
+def db_list(category, page_number, page_size):
+    db_connection = connect_to_db()
     cursor = db_connection.cursor()
-    query = "SELECT content, url, date FROM phese4;"
-    cursor.execute(query)
+
+    # クエリの作成
+    query = """
+    SELECT content, url, date, category FROM phase4
+    WHERE category = %s OR %s = 'All'
+    ORDER BY date DESC
+    """
+    cursor.execute(query, (category, category))
+
     rows = cursor.fetchall()
+    cursor.close()
+    db_connection.close()
 
-    similarity_list = []
-    for content, url, date in rows:
-        similarity_list.append((content, url, date))
+    # ページネーションの処理
+    start_index = page_number * page_size
+    end_index = start_index + page_size
+    paginated_data = rows[start_index:end_index]
+
+    # 結果のフォーマット
     response_text = "*保存されているデータ*:\n\n"
-
-    for content, url, date in similarity_list:
+    for content, url, date, category in paginated_data:
+        category_display = category if category else "なし"
         response_text += f"*Content:* {content}\n"
         response_text += f"*URL:* <{url}|Link>\n"
-        response_text += f"*Date:* {date}\n\n"
+        response_text += f"*Date:* {date}\n"
+        response_text += f"*Category:* {category_display}\n\n"
+
     return response_text
 
 
@@ -50,7 +54,7 @@ def select_all_db(app: App):
         message_thread_ts = message['ts']
 
 
-        response_text = db_list() # phese4テーブルから全情報を取得する
+        response_text = db_list() # phase4テーブルから全情報を取得する
 
         try:
         # スレッド内に返信を送信

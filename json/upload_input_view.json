@@ -1,0 +1,61 @@
+{
+	"type": "modal",
+	"callback_id": "uploading",
+	"title": {
+		"type": "plain_text",
+		"text": "情報を入力"
+	},
+	"submit": {
+		"type": "plain_text",
+		"text": "送信"
+	},
+	"blocks": [
+		{
+			"dispatch_action": true,
+			"type": "input",
+			"block_id": "content-block",
+			"element": {
+				"type": "plain_text_input",
+				"dispatch_action_config": {
+					"trigger_actions_on": [
+						"on_character_entered"
+					]
+				},
+				"action_id": "plain_text_input-action"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "タイトルを入力してください",
+				"emoji": true
+			}
+		},
+		{
+			"type": "input",
+			"block_id": "url-block",
+			"element": {
+				"type": "plain_text_input",
+				"action_id": "url_input"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "URLを入力してください"
+			}
+		},
+		{
+			"type": "input",
+			"block_id": "category-input-block",
+			"element": {
+				"type": "plain_text_input",
+				"action_id": "category_input",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "新しいカテゴリーを入力してください"
+				}
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "新しいカテゴリーを入力"
+			}
+		}
+	]
+}

@@ -1,54 +1,53 @@
-import logging
-logging.basicConfig(level=logging.ERROR)
-
-import os
-from slack_bolt import App
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
-from datetime import datetime
-import mysql.connector
-import pickle
-
+# 環境変数読込
 from dotenv import load_dotenv
 load_dotenv()
+from modules.chatgpt import chatgpt # Chat-GPTの回答を生成
 
-from modules.similarity import get_embedding
+def get_thread_title(client, channel_id, thread_ts):
+    """
+    この関数は、指定されたスレッドのタイトルを生成します。
+    スレッドの最初のメッセージを基にタイトルを作成します。
 
-def store_thread(app: App):
-    @app.message("@save")
-    def get_thread_url(event, say):
-        print("動作確認")
-        channel_id = event['channel']
-        message_ts = event['ts']
-        message_text = event['text']
-        thread_ts = event.get('thread_ts', message_ts)  # スレッドのタイムスタンプを取得、なければメッセージのタイムスタンプを使用
+    引数:
+    client -- Slackのクライアント
+    channel_id -- スレッドが存在するチャンネルのID
+    thread_ts -- タイトルを生成するスレッドのタイムスタンプ
 
-        # スレッドのURLを生成
-        thread_url = f"https://dec-ph4-hq.slack.com/archives/{channel_id}/p{message_ts.replace('.', '')}?thread_ts={thread_ts.replace('.', '')}&cid={channel_id}"
+    戻り値:
+    thread_title -- スレッドのタイトル
+    """
+    prev_message = client.conversations_replies(channel=channel_id, ts=thread_ts) # スレッドの情報を取得
+    all_messages = " ".join(msg['text'] for msg in prev_message['messages']) # スレッド内の全会話を取得
 
-        config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-        }
-        db_connection = mysql.connector.connect(**config)
-        cursor = db_connection.cursor()
-        text1 = message_text # 取得してきた質問
-        text1 = text1[6:] # @save の部分を消す
-        vector1 = get_embedding(text1)
-        vector_bytes = pickle.dumps(vector1)
+    summary_prompt = all_messages + "\nこの会話に50文字以内でタイトルをつけて" # 最初のメッセージを基に要約を求めるプロンプト作成
+    thread_title = chatgpt(summary_prompt) # スレッドのタイトルを生成
 
-        url = thread_url
-        category = "スレッド"
+    return thread_title # スレッドのタイトル
 
-        today = datetime.now()
+def get_thread_summary(client, channel_id, thread_ts):
+    """
+    この関数は、指定されたスレッドの要約を生成します。
+    スレッドの全会話を取得し、それを基に要約を作成します。
 
-        # データベースにデータを挿入
-        insert_query = "INSERT INTO phese4 (content, vector, url, date, category) VALUES (%s, %s, %s, %s, %s);"
-        cursor.execute(insert_query, (text1, vector_bytes, url ,today, category))
-        db_connection.commit()
+    引数:
+    client -- Slackのクライアント
+    channel_id -- スレッドが存在するチャンネルのID
+    thread_ts -- 要約するスレッドのタイムスタンプ
 
-        # 生成したURLをSlackチャンネルに返信
-        say(text=f"スレッドのURL: {thread_url}", channel=channel_id)
-        say("保存しました。")
+    戻り値:
+    summary_text -- 要約、質問、結論をカンマ区切りでまとめた文字列
+    """
+    prev_message = client.conversations_replies(channel=channel_id, ts=thread_ts) # スレッドの情報を取得
+    all_messages = " ".join(msg['text'] for msg in prev_message['messages']) # スレッド内の全会話を取得
+
+    summary_prompt1 = all_messages + "\nこの会話の内容をまとめた要約を40字以内にまとめて回答してください。" 
+    summary_prompt2 = all_messages + "\nこの会話で一番最初に行われた質問を一番最初の質問を40字以内にまとめて回答してください。"
+    summary_prompt3 = all_messages + "\nこの会話における結論を40字以内にまとめて回答してください。"
+
+    summary_text1 = chatgpt(summary_prompt1)
+    summary_text2 = chatgpt(summary_prompt2)
+    summary_text3 = chatgpt(summary_prompt3)
+
+    return_text = {summary_text1, summary_text2, summary_text3}
+
+    return return_text

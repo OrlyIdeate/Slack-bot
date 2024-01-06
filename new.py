@@ -73,7 +73,7 @@ def ret_gpt(message, say):
         text1 = message_text # 取得してきた質問
         vector1 = get_embedding(text1)
         # データベースから全てのベクトルを取得
-        query = "SELECT content, vector, url, date FROM phese4;"
+        query = "SELECT content, vector, url, date FROM phase4;"
         cursor.execute(query)
         rows = cursor.fetchall()
         similarity_list = []
@@ -116,7 +116,7 @@ def ret_gpt(message, say):
         }
     db_connection = mysql.connector.connect(**config)
     cursor = db_connection.cursor()
-    query = "SELECT content, url, date FROM phese4;"
+    query = "SELECT content, url, date FROM phase4;"
     cursor.execute(query)
     rows = cursor.fetchall()
 
@@ -169,7 +169,7 @@ def handle_message(event, say):
     today = datetime.now()
 
     # データベースにデータを挿入
-    insert_query = "INSERT INTO phese4 (content, vector, url, date) VALUES (%s, %s, %s, %s);"
+    insert_query = "INSERT INTO phase4 (content, vector, url, date) VALUES (%s, %s, %s, %s);"
     cursor.execute(insert_query, (text1, vector_bytes, url ,today))
     db_connection.commit()
 

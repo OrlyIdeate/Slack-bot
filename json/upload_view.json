@@ -1,0 +1,46 @@
+{
+	"title": {
+		"type": "plain_text",
+		"text": "アップロード"
+	},
+	"callback_id": "modal-submit_up",
+	"submit": {
+		"type": "plain_text",
+		"text": "次へ"
+	},
+	"type": "modal",
+	"close": {
+		"type": "plain_text",
+		"text": "閉じる"
+	},
+	"blocks": [
+		{
+			"type": "input",
+            "block_id": "radio_buttons",
+			"element": {
+				"type": "radio_buttons",
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "登録されたカテゴリーを選ぶ"
+						},
+						"value": "choose_category"
+					},
+					{
+						"text": {
+							"type": "plain_text",
+							"text": "新しくカテゴリーを入力する"
+						},
+						"value": "enter_category"
+					}
+				],
+                "action_id": "radio_buttons_action"
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "どのようなカテゴリーのものをアップロードしますか？"
+			}
+		}
+	]
+}

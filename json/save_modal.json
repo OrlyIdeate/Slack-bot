@@ -1,0 +1,267 @@
+{
+	"first":{
+		"type": "modal",
+		"callback_id": "save_submit",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"submit": {
+			"type": "plain_text",
+			"text": "保存",
+			"emoji": true
+		},
+		"close": {
+			"type": "plain_text",
+			"text": "キャンセル",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": " "
+				}
+			},
+			{
+				"type": "input",
+				"block_id": "title_input",
+				"element": {
+					"type": "plain_text_input",
+					"action_id": "title",
+					"placeholder": {
+						"type": "plain_text",
+						"text": "スレッドの内容が推測しやすいタイトルを入力してください"
+					}
+				},
+				"label": {
+					"type": "plain_text",
+					"text": "タイトル",
+					"emoji": true
+				}
+			},
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": " "
+				},
+				"accessory": {
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "自動生成",
+						"emoji": true
+					},
+					"value": "generate",
+					"action_id": "generate"
+				}
+			}
+		]
+	},
+	"generate":{
+		"type": "modal",
+		"callback_id": "save_submit",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"submit": {
+			"type": "plain_text",
+			"text": "保存",
+			"emoji": true
+		},
+		"close": {
+			"type": "plain_text",
+			"text": "キャンセル",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "input",
+				"block_id": "title_input",
+				"element": {
+					"type": "plain_text_input",
+					"action_id": "title",
+					"initial_value": " "
+				},
+				"label": {
+					"type": "plain_text",
+					"text": "タイトル",
+					"emoji": true
+				}
+			},
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": " "
+				},
+				"accessory": {
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "再生成",
+						"emoji": true
+					},
+					"action_id": "generate"
+				}
+			}
+		]
+	},
+	"loading":{
+		"type": "modal",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "*チャッピーくんがGPT-4にタイトル生成を依頼中...*"
+				},
+				"accessory": {
+					"type": "image",
+					"image_url": "https://i.pinimg.com/originals/94/7b/5c/947b5cdcb3f83afefa095b5cb8bc846d.gif",
+					"alt_text": "flying blue bird"
+				}
+			}
+		]
+	},
+	"end_loading":{
+		"type": "modal",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"blocks": [
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "*チャッピーくんがスレッドを保存しに行ってます...*"
+				},
+				"accessory": {
+					"type": "image",
+					"image_url": "https://i.pinimg.com/originals/94/7b/5c/947b5cdcb3f83afefa095b5cb8bc846d.gif",
+					"alt_text": "flying blue bird"
+				}
+			}
+		]
+	},
+	"end":{
+		"type": "modal",
+		"title": {
+			"type": "plain_text",
+			"text": "スレッドを保存",
+			"emoji": true
+		},
+		"close": {
+			"type": "plain_text",
+			"text": "閉じる",
+			"emoji": true
+		},
+		"private_metadata": "",
+		"blocks": [
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "保存しました",
+					"emoji": true
+				}
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "*<google.com|title>*"
+				}
+			},
+			{
+				"type": "section",
+				"fields": [
+					{
+						"type": "mrkdwn",
+						"text": "*カテゴリー*\n"
+					},
+					{
+						"type": "mrkdwn",
+						"text": "*追加日*\n"
+					}
+				]
+			}
+		]
+	},
+	"post_summary": {
+		"blocks": [
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "質問",
+					"emoji": true
+				}
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "質問"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "要約",
+					"emoji": true
+				}
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "要約"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "結論",
+					"emoji": true
+				}
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "結論"
+					}
+				]
+			}
+		]
+	}
+}

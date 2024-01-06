@@ -1,0 +1,84 @@
+{
+    "question":{
+        "type": "modal",
+        "callback_id": "question-submit",
+        "title": {
+            "type": "plain_text",
+            "text": "Chat-GPTに質問"
+        },
+        "submit": {
+            "type": "plain_text",
+            "text": "送信"
+        },
+        "blocks": [
+            {
+                "type": "input",
+                "block_id": "question-block",
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "input_field",
+                    "multiline": true
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "質問を入力してください"
+                }
+            }
+        ]
+    },
+    "loading":{
+        "title": {
+            "type": "plain_text",
+            "text": "回答",
+            "emoji": true
+        },
+        "type": "modal",
+        "close": {
+            "type": "plain_text",
+            "text": "閉じる",
+            "emoji": true
+        },
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "*チャッピーくんがGPT-4に回答を依頼中…*"
+                },
+                "accessory": {
+                    "type": "image",
+                    "image_url": "https://i.pinimg.com/originals/94/7b/5c/947b5cdcb3f83afefa095b5cb8bc846d.gif",
+                    "alt_text": "flying blue bird"
+                }
+            }
+        ]
+    },
+    "answer":{
+        "type": "modal",
+        "callback_id": "answer-submit",
+        "title": {
+            "type": "plain_text",
+            "text": "回答",
+            "emoji": true
+        },
+        "submit": {
+            "type": "plain_text",
+            "text": "スレッドを立てる",
+            "emoji": true
+        },
+        "close": {
+            "type": "plain_text",
+            "text": "閉じる",
+            "emoji": true
+        },
+        "blocks": [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "生成中…"
+                }
+            }
+        ]
+    }
+}

@@ -1,10 +1,9 @@
 import os
 import numpy as np
-import pandas as pd
 import openai
 import mysql.connector
 import pickle
-
+from modules.DB import connect_to_db
 # .env読み込み
 from dotenv import load_dotenv
 load_dotenv()
@@ -34,21 +33,15 @@ def cosine_similarity(vec_a, vec_b):
 
 def get_top_5_similar_texts(message_text):
     vector1 = get_embedding(message_text)
-    config = {
-        'user': 'root',
-        'password': 'citson-buzrit-4cyxZu',
-        'host': '35.223.243.48',
-        'database': 'test1',
-        }
-    db_connection = mysql.connector.connect(**config)
+    db_connection = connect_to_db()
     cursor = db_connection.cursor()
-    query = "SELECT content, vector, url, date FROM phese4;"
+    query = "SELECT content, vector, url, date, category FROM phase4;"
     cursor.execute(query)
     rows = cursor.fetchall()
     similarity_list = []
-    for content, vector_bytes, url, date in rows:
+    for content, vector_bytes, url, date, category in rows:
         vector2 = pickle.loads(vector_bytes)
         similarity = cosine_similarity(vector1, vector2)
-        similarity_list.append((similarity, content, url, date))
+        similarity_list.append((similarity, content, url, date, category))
     similarity_list.sort(reverse=True)
     return similarity_list[:5]

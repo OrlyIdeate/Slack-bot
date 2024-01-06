@@ -20,7 +20,7 @@ config = {
 db_connection = mysql.connector.connect(**config)
 cursor = db_connection.cursor()
 # testテーブルのデータを取得
-query = "SELECT * FROM test;"
+query = "SELECT * FROM phase4;"
 df = pd.read_sql(query, con=db_connection)
 # # 表にスタイルを適用する
 # styled_df = df.style.set_properties(**{
