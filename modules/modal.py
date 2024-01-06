@@ -278,21 +278,22 @@ def register_modal_handlers(app: App):
 
         page_number = 0
         page_size = 5
-        response_text = db_list(category, page_number, page_size)
+        response_block = db_list(category, page_number, page_size)
 
         # "db_page_view.json" からモーダルの定義を読み込む
         with open("json/db_page_view.json", "r") as file:
             views = json.load(file)
 
         # 動的なコンテンツを更新
-        views["blocks"][0]["text"]["text"] = response_text
-        views["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
-        views["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
-        views["private_metadata"] = category
+        views["modal"]["blocks"].extend(response_block)
+        views["button"][0]["elements"][0]["value"] = str(page_number - 1)
+        views["button"][0]["elements"][1]["value"] = str(page_number + 1)
+        views["modal"]["blocks"].extend(views["button"])
+        views["modal"]["private_metadata"] = category
 
         client.views_update(
             view_id=body.get("view").get("id"),
-            view=views
+            view=views["modal"]
         )
 
 
@@ -310,25 +311,23 @@ def register_modal_handlers(app: App):
         elif action["action_id"] == "prev_page":
             page_number -= 1
 
-        new_page_data = db_list(category, page_number, page_size)
+        response_block = db_list(category, page_number, page_size)
 
-        # "db_move_view.json" からモーダルの定義を読み込む
-        with open("json/db_move_view.json", "r") as file:
+        # "db_page_view.json" からモーダルの定義を読み込む
+        with open("json/db_page_view.json", "r") as file:
             views = json.load(file)
 
         # 動的なコンテンツを更新
-        views["blocks"][0]["text"]["text"] = new_page_data
-        views["blocks"][1]["elements"][0]["value"] = str(page_number - 1)
-        views["blocks"][1]["elements"][1]["value"] = str(page_number + 1)
-        views["private_metadata"] = category
+        views["modal"]["blocks"].extend(response_block)
+        views["button"][0]["elements"][0]["value"] = str(page_number - 1)
+        views["button"][0]["elements"][1]["value"] = str(page_number + 1)
+        views["modal"]["blocks"].extend(views["button"])
+        views["modal"]["private_metadata"] = category
 
-        try:
-            client.views_update(
-                view_id=body["view"]["id"],
-                view=views
-            )
-        except SlackApiError as e:
-            print(f"Error opening modal: {e}")
+        client.views_update(
+            view_id=body.get("view").get("id"),
+            view=views["modal"]
+        )
 
     upload_timestamp = {}
 

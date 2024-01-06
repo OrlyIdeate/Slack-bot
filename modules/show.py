@@ -1,4 +1,4 @@
-import logging
+import logging, json, copy
 logging.basicConfig(level=logging.ERROR)
 
 import os
@@ -34,16 +34,22 @@ def db_list(category, page_number, page_size):
     end_index = start_index + page_size
     paginated_data = rows[start_index:end_index]
 
-    # 結果のフォーマット
-    response_text = "*保存されているデータ*:\n\n"
-    for content, url, date, category in paginated_data:
-        category_display = category if category else "なし"
-        response_text += f"*Content:* {content}\n"
-        response_text += f"*URL:* <{url}|Link>\n"
-        response_text += f"*Date:* {date}\n"
-        response_text += f"*Category:* {category_display}\n\n"
+    with open("json/similarity_list.json") as f:
+        similar_view = json.load(f)["blocks"]
+    similar_view.append({"type": "divider"})
 
-    return response_text
+    response_block = []
+
+    # 結果のフォーマット
+    for content, url, date, category in paginated_data:
+        similar_view = copy.deepcopy(similar_view)
+        similar_view[0]["text"]["text"] = f"*<{url}|{content}>*"
+        similar_view[1]["elements"][0]["text"] = f":hash:{category}"
+        similar_view[1]["elements"][1]["text"] = f":calendar:{date}"
+        response_block.extend(similar_view)
+
+
+    return response_block
 
 
 def select_all_db(app: App):

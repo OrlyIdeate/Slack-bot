@@ -1,39 +1,33 @@
 {
-    "type": "modal",
-    "title": {
-        "type": "plain_text",
-        "text": "全ナレッジ"
-    },
-    "blocks": [
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": ""
-            }
+    "modal":{
+        "type": "modal",
+        "title": {
+            "type": "plain_text",
+            "text": "全ナレッジ"
         },
-        {
-            "type": "actions",
-            "elements": [
-                {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "前へ"
-                    },
-                    "action_id": "prev_page",
-                    "value": ""
+        "blocks": []
+    },
+    "button":[{
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "前へ"
                 },
-                {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "次へ"
-                    },
-                    "action_id": "next_page",
-                    "value": ""
-                }
-            ]
-        }
-    ]
+                "action_id": "prev_page",
+                "value": ""
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "次へ"
+                },
+                "action_id": "next_page",
+                "value": ""
+            }
+        ]
+    }]
 }
