@@ -1,5 +1,4 @@
-import os
-import openai
+import os, openai, re
 from slack_bolt import App
 
 # .env読み込み
@@ -7,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generator_answer_gpt(app: App):
     """メンションでの質問に回答する。
@@ -19,15 +18,47 @@ def generator_answer_gpt(app: App):
     def generate_answer(event, client):
         channel_id = event.get("channel") # チャンネルID取得
         thread_ts = event.get('thread_ts') # スレッドのタイムスタンプを取得
-        message_text = event.get('text') # 質問の内容を取得
-        message_user = event.get('user') # 質問を行った人を取得
+        thr_mes = client.conversations_replies(channel=channel_id, ts=thread_ts)["messages"] # ここまでの会話を取得
 
+        #「生成中…」を伝えるメッセージ
         temp = client.chat_postMessage(
             channel=channel_id,
             text="生成しています。しばらくお待ち下さい...:now_loading:",
             thread_ts=thread_ts
         )
-        thread_info = client.conversations_replies(channel=channel_id, ts=thread_ts) # ここまでの会話を取得
+
+
+        messages = [
+            {"role": "system", "content": "回答は常にSlackのBlock Kitで使用できるマークダウン形式で出力してください"},
+            {"role": "user", "content": thr_mes[0]["text"]},
+            {"role": "assistant", "content": thr_mes[1]["text"]}
+        ]
+
+        thr_mes = thr_mes[7:]
+        pattern = re.compile(r'<@.*?>')
+        for mes in thr_mes:
+            match = pattern.search(mes["text"])
+            if match:
+                mes["text"] = pattern.sub('', mes["text"])
+            try:
+                mes["bot_profile"]
+                messages.append({"role": "assistant", "content": mes["text"]})
+            except KeyError:
+                messages.append({"role": "user", "content": mes["text"]})
+
+        #now_loadingを消す
+        client.chat_delete(
+            channel=channel_id,
+            ts=temp['ts']
+        )
+
+        client.chat_postMessage(
+            channel=channel_id,
+            text=multi_chatgpt(messages),
+            thread_ts=thread_ts
+        )
+
+        """
         #それていないときのメッセージ作成
         question_1 = "以下の会話の最後にユーザーが行った質問は質問として意図が明確ですか？明確なときは「問題ないです」とのみ出力してください。不十分であれば不十分である旨と何が不十分なのかを教えてください。ただし、この質問が出るまでの会話の内容は以下のとおりです。各行に{ユーザー名}:{チャット内容}の形で表しています。回答の際には「U067CHBEU86:」などのユーザーを表記しなくていいです。\n"
         question_2 = "以下の会話の最後にユーザーがしている質問に回答してください。会話は各行に{ユーザー名}:{チャット内容}の形で表しています。回答の際には「U067CHBEU86:」などのユーザーを表記しなくていいです。\n"
@@ -74,7 +105,7 @@ def generator_answer_gpt(app: App):
                 text=result_1,
                 thread_ts=thread_ts
             )
-
+        """
 
 def chatgpt(message):
     """引数に渡した内容をChat-GPT4に入力し、回答を返す。
@@ -85,7 +116,6 @@ def chatgpt(message):
     返り値:
         str: Chat-GPT4が生成した回答
     """
-    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
     chat_completion = openai_client.chat.completions.create(
         messages=[
@@ -107,7 +137,6 @@ def censor_gpt(question):
         引数: question (str): 質問\n
         戻り値: str
     """
-    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
     chat_completion = openai_client.chat.completions.create(
         messages=[
@@ -142,7 +171,6 @@ def censor_gpt(question):
 
 
 def stream_chat(question):
-    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
     chat_completion = openai_client.chat.completions.create(
         messages=[{"role": "user", "content": question}],
@@ -152,3 +180,23 @@ def stream_chat(question):
 
     for chunk in chat_completion:
         yield chunk.choices[0].delta.content
+
+
+def multi_chatgpt(messages):
+    """引数に渡した内容をmessagesのパラメータに渡し、回答を返す。
+
+    引数:
+        messages (list): messagesのパラーメータ
+
+    返り値:
+        str: Chat-GPT4が生成した回答
+    """
+
+    chat_completion = openai_client.chat.completions.create(
+        messages=messages,
+        model="gpt-4"
+    )
+
+    response = chat_completion.choices[0].message.content
+
+    return response
