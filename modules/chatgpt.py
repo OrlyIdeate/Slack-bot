@@ -98,6 +98,44 @@ def chatgpt(message):
 
 
 
+def censor_gpt(question):
+    """質問がベストプラクティスに基づいているか検閲します。\n\n
+
+        引数: question (str): 質問\n
+        戻り値: str
+    """
+    openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+    chat_completion = openai_client.chat.completions.create(
+        messages=[
+            {
+                "role": "system",
+                "content": """ユーザーのプロンプトがベストプラクティスに基づいている場合のみ、回答してください。\n
+                    プロンプトがベストプラクティスに基づいていない場合は、不十分な点を回答してください。\n
+                    ベストプラクティス:```\n
+                    指示が明示的である。\n
+                    具体的かつ詳細な指示である。\n
+                    量などを指示している場合は「なるべく」「かなり」「少なく」「ある程度」などの形容表現ではなく、「3〜5文」「3点」などの数字での指示である。\n
+                    ```\n
+                    出力形式:```\n
+                    質問がベストプラクティスに基づいていません。\n
+                    *不十分な点*\n
+                    {不十分だった点を箇条書き}\n
+                    *改善例*\n
+                    {改善の仕方}\n
+                    ```
+                    """
+            },
+            {
+                "role": "user", "content": question
+            }
+        ],
+        model="gpt-4",
+    )
+
+    return chat_completion.choices[0].message.content
+
+
 def stream_chat(question):
     openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
