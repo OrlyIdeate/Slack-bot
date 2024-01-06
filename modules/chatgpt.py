@@ -88,7 +88,10 @@ def chatgpt(message):
     openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
     chat_completion = openai_client.chat.completions.create(
-        messages=[{"role": "user", "content": message}],
+        messages=[
+            {"role": "system", "content": "回答は常にSlackのBlock Kitで使用できるマークダウン形式で出力してください"},
+            {"role": "user", "content": message}
+        ],
         model="gpt-4"
     )
 
@@ -122,9 +125,10 @@ def censor_gpt(question):
                     *不十分な点*\n
                     {不十分だった点を箇条書き}\n
                     *改善例*\n
-                    {改善の仕方}\n
+                    {ユーザーのプロンプトの改善例}\n
                     ```
-                    ベストプラクティスに基づいているときは質問への回答のみを返してください。
+                    ベストプラクティスに基づいているときは質問への回答のみを出力してください。
+                    回答は常にSlackのBlock Kitで使用できるマークダウン形式で出力してください。
                     """
             },
             {
