@@ -1,6 +1,7 @@
 import json
 from slack_bolt import App
 from datetime import datetime
+import random
 
 # .env読み込み
 from dotenv import load_dotenv
@@ -24,6 +25,7 @@ def register_modal_handlers(app: App):
         ch_id = body["channel"]["id"]
         ts = body["message"]["ts"]
         team_domain = body["team"]["domain"]
+        ran = random.randrange(7)# 乱数取得
         # "question_view.json" からモーダルの定義を読み込む
         with open("json/question_view.json", "r") as file:
             modal_view = json.load(file)
@@ -46,10 +48,27 @@ def register_modal_handlers(app: App):
         ch_id, team_domain = view["private_metadata"].split(",")
         question = body["view"]["state"]["values"]["question-block"]["input_field"]["value"]
         # modal_view["answer"]["private_metadata"] = f"{ch_id},{team_domain},{question}"
-
+        temp=modal_view["loading"]
+        temp['blocks'][0]['text']['text'] += "\n\n *=tips=*\n\n"
+        #ran=random.randrange(7)
+        ran=1
+        if ran==0:
+            temp['blocks'][0]['text']['text'] += "質の高い回答を得るためには、希望のコンテキスト、結果、長さ、形式、スタイルなどを*具体的*かつできるだけ*詳細*にプロンプトに含めることが大切です。いつ・どこで・誰が・何を・どれくらいなどの具体的な情報があることで、より精度の高い回答結果が得られます。"
+        if ran==1:
+            temp['blocks'][0]['text']['text'] += "指示する際に、プロンプトの最初に指示を置くことで期待する出力が得られやすくなります。\n*良い例*\n以下のテキストの要点を箇条書きでまとめてください。\n#テキスト : (任意のテキスト)"
+        if ran==2:
+            temp['blocks'][0]['text']['text'] += "目的の出力形式を例で提示することで、回答の精度が高くなります。指定した項目内容の回答をChatGPTから得たい場合や、内容が難しい指示がある場合に特に役立つでしょう。出力形式を具体例で提示すると、意図しない形式での出力の防止効果も期待できます。例えば、OpenAI社の概要を知りたい場合、「#出力:設立年、事業内容、会社本拠地住所、資本金」のように具体的な項目や内容例を提示しましょう。"
+        if ran==3:
+            temp['blocks'][0]['text']['text'] += "ChatGPTに具体例を挙げながら指示を出すプロンプトを*「ファインショット」*、具体例を入れない指示を*「ゼロショット」*と呼びます。プロンプトは、具体例を提示せずに書く「ゼロショット」から始め、徐々に具体例を追加していく方法がおすすめです。\n*良い例*\n\n*ゼロショット*\n人間は期待するとどのような表情をしますか？\n\n*フューショット*\n提示した単語が「笑顔」と「泣き顔」のどちらに該当するか回答してください。以下が解答例です。\n嬉しい→笑顔\n悲しい→泣き顔\n期待→"
+        if ran==4:
+            temp['blocks'][0]['text']['text'] += "大雑把で不明確な説明や表現を減らし、明確に指示を出すことで精度の高い回答が得られます。そのため、「なるべく」「かなり」「少なく」「ある程度」などの形容詞を指示に使うのは控え、「3〜5文」「3点」などの具体的な数値をプロンプトに含めて、ChatGPTに指示を出しましょう。"
+        if ran==5:
+            temp['blocks'][0]['text']['text'] += "ChatGPTに指示する場合、してはいけないことではなく、*何をすべきか*を具体的にプロンプトに含めたほうが回答の精度がよくなるようです。"
+        if ran==6:
+            temp['blocks'][0]['text']['text'] += "ChatGPTでコードを生成する際、書き始めに*「リーディングワード」*を使うと希望する特定の回答出力への誘導が可能なため、質の高い回答の出力に繋がります。たとえば、pythonのコードを書いてほしいならば、質問の最後にimportという文言を付け加えることでGPTにimportからコードを書くべきであると伝えられ、適切な出力がなされやすくなります。"
         ack(
             response_action="update",
-            view=modal_view["loading"]
+            view=temp
         )
 
         ch_id, team_domain = view["private_metadata"].split(",")
