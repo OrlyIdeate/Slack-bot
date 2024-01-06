@@ -608,8 +608,8 @@ def register_modal_handlers(app: App):
             view=modal_view["end"]
         )
 
-        # upload(title, url, "スレッド") # DBにアップロード
-        # active_end(url) # スレッドの稼働状況を「停止」に上書き
+        upload(title, url, "スレッド") # DBにアップロード
+        active_end(url) # スレッドの稼働状況を「停止」に上書き
 
         # スレッド内の要約を生成
         pattern = re.compile(r'\{[^{}]*\}')
