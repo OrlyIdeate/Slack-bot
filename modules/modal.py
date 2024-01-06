@@ -601,21 +601,18 @@ def register_modal_handlers(app: App):
         upload(title, url, "スレッド") # DBにアップロード
         active_end(url) # スレッドの稼働状況を「停止」に上書き
 
-        summary = get_thread_summary(client, ch_id, thread_ts) # スレッド内の要約を生成
-        question = summary[1]
-        conclusion = summary[2]
-        summary=summary[0]
+        summary = json.loads(get_thread_summary(client, ch_id, thread_ts)) # スレッド内の要約を生成
 
         # block_kitを作成
-        modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = question
-        modal_view["post_summary"]["blocks"][4]["elements"][0]["text"] = summary
-        modal_view["post_summary"]["blocks"][7]["elements"][0]["text"] = conclusion
+        modal_view["post_summary"]["blocks"][1]["elements"][0]["text"] = summary["question"]
+        modal_view["post_summary"]["blocks"][4]["elements"][0]["text"] = summary["summary"]
+        modal_view["post_summary"]["blocks"][7]["elements"][0]["text"] = summary["conclusion"]
 
         # スレッドに要約を投稿
         client.chat_postMessage(
             channel=ch_id,
             thread_ts=thread_ts,
-            text=f"{question}\n{summary}\n{conclusion}",
+            text="要約を投稿しました。",
             blocks=modal_view["post_summary"]["blocks"]
         )
 
