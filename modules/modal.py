@@ -494,7 +494,7 @@ def register_modal_handlers(app: App):
         upload(content, url, category)
 
         # 保存された内容とカテゴリーをユーザーに通知
-        response_message = f"保存された内容は以下です:\n内容: <{url}|{content}>\nカテゴリ: {category}"
+        response_message = f"*<{url}|{content}>が共有されました。* \n:hash: {category}"
         client.chat_postMessage(channel=body["user"]["id"], text = response_message)
 
         with open("json/response_message_block.json", "r") as file:

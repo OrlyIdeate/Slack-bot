@@ -1,18 +1,11 @@
 {
     "blocks": [
         {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "次の内容が共有されました:"
-            }
-        },
-        {
             "type": "context",
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": "*<URL_PLACEHOLDER|CONTENT_PLACEHOLDER>*"
+                    "text": "*<URL_PLACEHOLDER|CONTENT_PLACEHOLDER>が共有されました。*"
                 }
             ]
         },
@@ -21,7 +14,7 @@
             "elements": [
                 {
                     "type": "mrkdwn",
-                    "text": "*カテゴリ:* CATEGORY_PLACEHOLDER"
+                    "text": ":hash: CATEGORY_PLACEHOLDER"
                 }
             ]
         }
