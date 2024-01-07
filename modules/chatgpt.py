@@ -200,3 +200,54 @@ def multi_chatgpt(messages):
     response = chat_completion.choices[0].message.content
 
     return response
+
+
+def name_tag(question):
+    """質問にtagをつけ、配列として返す。
+
+    引数:
+        question (str): 
+
+    返り値:
+        list: Chat-GPT4が生成したtag
+        tagの生成に失敗した場合、[-1]が返される
+    """
+
+    question += "\nという質問にタグを3つ付け、それ以外は出力しないでください。\n出力形式:#{タグ1つ目}/#{タグ2つ目}/#{タグ3つ目} ..."
+
+    for i in range(5):
+        chat_completion = openai_client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": question
+                }
+            ],
+            model="gpt-4",
+        )
+
+        response = chat_completion.choices[0].message.content
+
+        tags=[]
+        now=""
+        check=True
+
+        for j in range(len(response)):
+            if response[j]=='/':
+                tags.append(now)
+                now=""
+            else:
+                now += response[j]
+        
+        for j in range(len(tags)):
+            if tags[j][0]!='#':
+                check=False
+                break
+        
+        if check & len(tags)>1:
+            return tags
+    
+    return [-1]
+
+
+
