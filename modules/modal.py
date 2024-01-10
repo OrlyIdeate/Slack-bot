@@ -175,6 +175,16 @@ def register_modal_handlers(app: App):
 
 
 
+
+
+
+
+
+
+
+
+
+
     @app.action("search")
     def open_search_modal(ack, body, client):
         ack()
@@ -329,15 +339,27 @@ def register_modal_handlers(app: App):
             view=views["modal"]
         )
 
+
+
+
+
+
+
+
+
+
     upload_timestamp = {}
 
     @app.action("upload")
     def open_modal(ack, body, client):
         ack()
+        ch_id = body["channel"]["id"]
+        ts = body["message"]["ts"]
 
         try:
             with open("json/upload_view.json", "r") as file:
                 upload_view = json.load(file)
+            upload_view["private_metadata"] = ch_id
 
             client.views_open(
                 trigger_id=body["trigger_id"],
@@ -346,9 +368,6 @@ def register_modal_handlers(app: App):
 
         except SlackApiError as e:
             print(f"Error updating modal: {e}")
-
-        ch_id = body["channel"]["id"]
-        ts = body["message"]["ts"]
 
         # del_message関数の実装内容に基づいて適宜修正
         del_message(ch_id, ts)
@@ -365,6 +384,7 @@ def register_modal_handlers(app: App):
         try:
             with open("json/upload_view.json", "r") as file:
                 upload_view = json.load(file)
+            upload_view["private_metadata"] = body["channel"]["id"]
 
             client.views_open(
                 trigger_id=body["trigger_id"],
@@ -374,37 +394,10 @@ def register_modal_handlers(app: App):
         except SlackApiError as e:
             print(f"Error updating modal: {e}")
 
-    @app.action("category_selection")
-    def handle_selection(ack, body, client):
-        ack()
-        categories = get_unique_categories()
-        user_selection = body["actions"][0]["selected_option"]["value"]
-        category_options = [{"text": {"type": "plain_text", "text": category}, "value": category} for category in categories]
-
-        if user_selection == "choose_category":
-            # JSONファイルからモーダルの定義を読み込む
-            with open("json/upload_selection_view.json", "r") as file:
-                modal_view_up = json.load(file)
-
-            # カテゴリーオプションを動的に追加
-            modal_view_up["blocks"][2]["element"]["options"] = category_options
-        else:
-            # JSONファイルからモーダルの定義を読み込む
-            with open("json/upload_input_view.json", "r") as file:
-                modal_view_up = json.load(file)
-
-        try:
-            client.views_update(
-                trigger_id=body["trigger_id"],
-                view_id=body["view"]["id"],
-                view=modal_view_up
-            )
-        except SlackApiError as e:
-            print(f"Error updating modal: {e}")
-
 
     @app.view("modal-submit_up")  # モーダルのcallback_idに合わせて設定
     def handle_modal_submission(ack, body, client, view, logger):
+        ch_id = body["view"]["private_metadata"]
         ack(
             response_action="update",
             view={
@@ -435,6 +428,7 @@ def register_modal_handlers(app: App):
             # JSONファイルからモーダルの定義を読み込む
             with open("json/upload_selection_view.json", "r") as file:
                 modal_view_up = json.load(file)
+            modal_view_up["private_metadata"] = ch_id
 
             # カテゴリーオプションを動的に追加
             modal_view_up["blocks"][2]["element"]["options"] = category_options
@@ -442,6 +436,7 @@ def register_modal_handlers(app: App):
             # JSONファイルからモーダルの定義を読み込む
             with open("json/upload_input_view.json", "r") as file:
                 modal_view_up = json.load(file)
+            modal_view_up["private_metadata"] = ch_id
 
         try:
             client.views_update(
@@ -454,6 +449,8 @@ def register_modal_handlers(app: App):
 
     @app.view("uploading")
     def uploading(ack, view, client, body):
+        ch_id = body["view"]["private_metadata"]
+        user_id = body["user"]["id"]
         ack(
             response_action="update",
             view={
@@ -506,11 +503,10 @@ def register_modal_handlers(app: App):
                 for element in block["elements"]:
                     element["text"] = element["text"].replace("URL_PLACEHOLDER", url).replace("CONTENT_PLACEHOLDER", content).replace("CATEGORY_PLACEHOLDER", category)
 
-        user_id = body["user"]["id"]
         if user_id in upload_timestamp and upload_timestamp[user_id]:
             thread_ts = upload_timestamp[user_id]
             client.chat_postMessage(
-                channel="C067ALJLXRQ",
+                channel=ch_id,
                 blocks=message_block["blocks"],
                 thread_ts=thread_ts
             )
